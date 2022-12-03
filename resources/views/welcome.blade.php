@@ -388,7 +388,7 @@
             font-family: 'Nunito', sans-serif;
         }
     </style>
-    @vite(['resources/css/app.css', 'resources/js/app.ts'])
+    @vite('resources/js/app.ts')
 </head>
 
 <body class="antialiased">
