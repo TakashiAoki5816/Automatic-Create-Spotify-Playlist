@@ -9,7 +9,7 @@ export default {
             this.getAuthorizeUrl();
         },
         getAuthorizeUrl: function () {
-            axios.get('api/getAuthorizeUrl')
+            axios.get('api/spotify/getAuthorizeUrl')
             .then(function (response) {
                 window.location.href = response.data.url;
             })

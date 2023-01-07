@@ -22,6 +22,8 @@
 <body class="antialiased">
     <div id="app">
         <login-component></login-component>
+        <access-token-component></access-token-component>
+        <create-playlist-component></create-playlist-component>
     </div>
 </body>
 
