@@ -28,7 +28,11 @@ class SpotifyController extends Controller
     public function getAccessToken(Request $request)
     {
         $response = $this->spotifyService->getAccessTokenRequest($request->input('code'));
-        return response()->json($response->body());
+
+        $accessToken = $response->body('access_token');
+        // $request->session()->put('access_token', 'セッションテスト');
+
+        return response()->json($accessToken);
     }
 
     /**

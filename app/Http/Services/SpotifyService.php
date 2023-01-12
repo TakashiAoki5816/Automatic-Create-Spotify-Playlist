@@ -4,6 +4,7 @@ namespace App\Http\Services;
 
 use Spotify;
 use GuzzleHttp\Client;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class SpotifyService
@@ -19,7 +20,13 @@ class SpotifyService
         $this->client = $client;
     }
 
-    public function getAccessTokenRequest($code)
+    /**
+     * Access Token取得リクエストを行う
+     *
+     * @param string $code
+     * @return Response
+     */
+    public function getAccessTokenRequest(string $code): Response
     {
         $url = 'https://accounts.spotify.com/api/token';
         $params = [
@@ -27,11 +34,9 @@ class SpotifyService
             'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
             'grant_type' => 'authorization_code',
             'code' => $code,
-            'redirect_uri' => 'http://127.0.0.1:8000'
+            'redirect_uri' => 'http://localhost'
         ];
-        $response = Http::asForm()->post($url, $params);
-
-        return $response;
+        return Http::asForm()->post($url, $params);
     }
 
     /**
@@ -42,6 +47,6 @@ class SpotifyService
     public function getAuthorizeUrl(): string
     {
         $baseUrl = 'https://accounts.spotify.com/authorize';
-        return $baseUrl . '?client_id=' . env('SPOTIFY_CLIENT_ID') . '&response_type=code' . '&redirect_uri=http://127.0.0.1:8000' . '&scope=user-top-read';
+        return $baseUrl . '?client_id=' . env('SPOTIFY_CLIENT_ID') . '&response_type=code' . '&redirect_uri=http://localhost' . '&scope=user-top-read';
     }
 }
