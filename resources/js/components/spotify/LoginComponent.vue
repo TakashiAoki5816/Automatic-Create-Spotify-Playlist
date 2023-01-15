@@ -6,10 +6,10 @@
 export default {
     methods: {
         spotifyLogin: function () {
-            this.getAuthorizeUrl();
+            this.authorize();
         },
-        getAuthorizeUrl: function () {
-            axios.get('api/spotify/getAuthorizeUrl')
+        authorize: function () {
+            axios.get('api/spotify/authorizeUrl')
             .then(function (response) {
                 window.location.href = response.data.url;
             })
