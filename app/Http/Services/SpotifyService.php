@@ -47,6 +47,6 @@ class SpotifyService
     public function getAuthorizeUrl(): string
     {
         $baseUrl = 'https://accounts.spotify.com/authorize';
-        return $baseUrl . '?client_id=' . env('SPOTIFY_CLIENT_ID') . '&response_type=code' . '&redirect_uri=http://localhost' . '&scope=user-top-read';
+        return $baseUrl . '?client_id=' . env('SPOTIFY_CLIENT_ID') . '&response_type=code' . '&redirect_uri=http://localhost' . '&scope=playlist-modify-public';
     }
 }
