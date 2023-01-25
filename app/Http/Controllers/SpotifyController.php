@@ -3,20 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\SpotifyService;
+use GuzzleHttp\Client;
 use Spotify;
 use Illuminate\Http\Request;
 
 class SpotifyController extends Controller
 {
     protected $spotifyService;
+    protected $guzzleClient;
     /**
      * SpotifyController Constructor
      *
      * @param Spotify $spotify
      */
-    public function __construct(SpotifyService $spotifyService)
+    public function __construct
+    (
+        SpotifyService $spotifyService,
+        Client $client,
+    )
     {
         $this->spotifyService = $spotifyService;
+        $this->guzzleClient = $client;
     }
 
     /**
@@ -28,11 +35,28 @@ class SpotifyController extends Controller
     public function getAccessToken(Request $request)
     {
         $response = $this->spotifyService->getAccessTokenRequest($request->input('code'));
+        $accessToken = json_decode($response->body());
+        $request->session()->put('access_token', $accessToken->access_token);
 
-        $accessToken = $response->body('access_token');
-        // $request->session()->put('access_token', 'セッションテスト');
+        return response()->json($response->body());
+    }
 
-        return response()->json($accessToken);
+    public function getUserProfile()
+    {
+        $accessToken = (new Request)->session()->get('access_token');
+        $response = $this->guzzleClient->request(
+            'GET',
+            "https://api.spotify.com/v1/me",
+            [
+                'auth' => [
+                    $accessToken
+                ],
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+            ]
+        );
+        return $response;
     }
 
     /**
@@ -40,15 +64,37 @@ class SpotifyController extends Controller
      *
      * @return
      */
-    public function createPlaylist()
+    public function createPlaylist(Request $request)
     {
-        $result = Spotify::playlist('34Q0PGji6l8u7MyH2RVTYl')->get();
-        // https://open.spotify.com/playlist/34Q0PGji6l8u7MyH2RVTYl?si=68db44cb3f2f4106
-        // またSpotify Libraryを使用すると、Access Tokenのことを気にせずとも使用できそう ← 単純に　Access Tokenを使用したAPIを使用していないだけの可能性あり
-        // ただ技術者以外は使用するのが難しそう　 git導入・開発環境構築済みが前提になるため　← clone前提での使用とするか
-        // https://open.spotify.com/playlist/4e5bQTFkklvb1l2Go242Q6?si=93d1867b52c84738
-        // $result = Spotify::artist('726WiFmWkohzodUxK3XjHX?si=nTayRcXtTBSf66Fl1-s6_Q')->get();
+        $accessToken = $request->session()->get('access_token');
+        $response = $this->guzzleClient->request(
+            'GET',
+            "https://api.spotify.com/v1/me",
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json'
+                ],
+            ]
+        );
+        $bodyContent = json_decode($response->getBody()->getContents());
+        $userId = $bodyContent->id;
+        $response = $this->guzzleClient->request(
+            'POST',
+            "https://api.spotify.com/v1/users/{$userId}/playlists",
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => [
+                    "name" => "Laravelテストプレイリスト作成",
+                    "description" => "Laravelテストプレイリスト description",
+                    "public" => true
+                ]
+            ]
+        );
 
-        return response()->json($result);
+        return response()->json($response);
     }
 }

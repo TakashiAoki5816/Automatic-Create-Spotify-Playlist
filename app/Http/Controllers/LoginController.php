@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 
 class LoginController extends Controller
 {
+    protected $spotifyService;
     /**
      * LoginController Constructor
      *
@@ -22,7 +23,7 @@ class LoginController extends Controller
      *
      * @return JsonResponse
      */
-    public function getAuthorizeUrl(): JsonResponse
+    public function authorizeUrl(): JsonResponse
     {
         try {
             $result = [

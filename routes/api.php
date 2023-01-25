@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['api'])->prefix('spotify')->group(function () {
-    Route::get('/getAuthorizeUrl', ['App\Http\Controllers\LoginController'::class, 'getAuthorizeUrl'])->name('getAuthorizeUrl');
+    Route::get('/authorize', ['App\Http\Controllers\LoginController'::class, 'authorizeUrl'])->name('authorizeUrl');
     Route::get('/getAccessToken', ['App\Http\Controllers\SpotifyController'::class, 'getAccessToken'])->name('getAccessToken');
     Route::get('/createPlaylist', ['App\Http\Controllers\SpotifyController'::class, 'createPlaylist'])->name('createPlaylist');
 });

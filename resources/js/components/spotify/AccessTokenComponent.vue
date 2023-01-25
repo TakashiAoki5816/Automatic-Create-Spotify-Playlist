@@ -18,7 +18,7 @@ export default {
                 const code = this.getParam('code');
                 axios.get('api/spotify/getAccessToken?code=' + code)
                 .then(function (r) {
-                    console.log(r.data);
+                    console.log('アクセストークンを取得しました。')
                 })
                 .catch(function (e) {
                     console.log(e);
