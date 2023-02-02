@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\SpotifyService;
+use App\Http\Requests\AuthorizeRequest;
 use Illuminate\Http\JsonResponse;
 
 class LoginController extends Controller
@@ -23,12 +24,13 @@ class LoginController extends Controller
      *
      * @return JsonResponse
      */
-    public function authorizeUrl(): JsonResponse
+    public function authorizeUrl(AuthorizeRequest $request): JsonResponse
     {
         try {
+            $authorizeEntity = $request->toEntity();
             $result = [
                 'status' => 200,
-                'url' => $this->spotifyService->getAuthorizeUrl(),
+                'url' => $authorizeEntity->url(),
             ];
         } catch (\Exception $e) {
             $result = [
