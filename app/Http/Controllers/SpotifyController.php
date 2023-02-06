@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\SpotifyService;
+use App\Http\Requests\AuthorizeRequest;
 use GuzzleHttp\Client;
 use Spotify;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SpotifyController extends Controller
@@ -16,14 +18,34 @@ class SpotifyController extends Controller
      *
      * @param Spotify $spotify
      */
-    public function __construct
-    (
+    public function __construct(
         SpotifyService $spotifyService,
         Client $client,
-    )
-    {
+    ) {
         $this->spotifyService = $spotifyService;
         $this->guzzleClient = $client;
+    }
+
+    /**
+     * 認可したいURLを返却
+     *
+     * @return JsonResponse
+     */
+    public function authorization(AuthorizeRequest $request): JsonResponse
+    {
+        try {
+            $authorizeEntity = $request->toEntity();
+            $result = [
+                'status' => 200,
+                'url' => $authorizeEntity->url(),
+            ];
+        } catch (\Exception $e) {
+            $result = [
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ];
+        }
+        return response()->json($result, $result['status']);
     }
 
     /**
