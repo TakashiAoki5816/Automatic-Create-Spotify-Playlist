@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Services\SpotifyService;
+use App\Http\Requests\AccessTokenRequest;
 use App\Http\Requests\AuthorizeRequest;
+use App\Http\Services\GuzzleService;
+use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
-use Spotify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Spotify;
 
 class SpotifyController extends Controller
 {
     protected $spotifyService;
+    protected $guzzleService;
     protected $guzzleClient;
+
     /**
      * SpotifyController Constructor
      *
@@ -20,9 +24,11 @@ class SpotifyController extends Controller
      */
     public function __construct(
         SpotifyService $spotifyService,
+        GuzzleService $guzzleService,
         Client $client,
     ) {
         $this->spotifyService = $spotifyService;
+        $this->guzzleService = $guzzleService;
         $this->guzzleClient = $client;
     }
 
@@ -37,7 +43,7 @@ class SpotifyController extends Controller
             $authorizeEntity = $request->toEntity();
             $result = [
                 'status' => 200,
-                'url' => $authorizeEntity->url(),
+                'url' => $authorizeEntity->retrieveRequestUrl(),
             ];
         } catch (\Exception $e) {
             $result = [
@@ -49,18 +55,31 @@ class SpotifyController extends Controller
     }
 
     /**
-     * Access Tokenを取得
+     * Access Tokenを取得し、セッションに格納
      *
-     * @param Request $request
+     * @param AccessTokenRequest $request
      * @return JsonResponse
      */
-    public function getAccessToken(Request $request)
+    public function getAccessToken(AccessTokenRequest $request): JsonResponse
     {
-        $response = $this->spotifyService->getAccessTokenRequest($request->input('code'));
-        $accessToken = json_decode($response->body());
-        $request->session()->put('access_token', $accessToken->access_token);
+        try {
+            $accessTokenEntity = $request->toEntity();
+            list($url, $body) = $accessTokenEntity->retrieveRequestItems();
+            $response = $this->guzzleService->requestWithBody($url, $body);
+            $request->storeAccessTokenToSession(json_decode($response->getBody()));
 
-        return response()->json($response->body());
+            $result = [
+                'status' => 200,
+                'message' => 'アクセストークンを取得しました。',
+            ];
+        } catch (\Exception $e) {
+            $result = [
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ];
+        }
+
+        return response()->json($result);
     }
 
     public function getUserProfile()

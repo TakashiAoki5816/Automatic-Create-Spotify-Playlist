@@ -2,12 +2,12 @@
 
 namespace App\Entities;
 
-use App\Values\Scope;
-use JsonSerializable;
-use App\Values\ClientId;
 use App\Values\AccountUrl;
+use App\Values\ClientId;
 use App\Values\RedirectUrl;
 use App\Values\ResponseType;
+use App\Values\Scope;
+use JsonSerializable;
 
 /**
  * [認証エンティティ]
@@ -50,7 +50,12 @@ class AuthorizeEntity implements JsonSerializable
         return [];
     }
 
-    public function url()
+    /**
+     * リクエストURLを返却
+     *
+     * @return string
+     */
+    public function retrieveRequestUrl(): string
     {
         return $this->accountUrl()->value() . '?client_id=' . $this->clientId()->value() . '&response_type=' . $this->responseType()->value() . '&redirect_uri=' . $this->redirectUrl()->value() . '&scope=' . $this->scope()->value();
     }

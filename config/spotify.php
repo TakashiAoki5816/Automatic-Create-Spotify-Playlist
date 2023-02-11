@@ -14,6 +14,8 @@ return [
     'auth' => [
         'client_id' => env('SPOTIFY_CLIENT_ID'),
         'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+        'base_url' => env('SPOTIFY_BASE_API_URL'),
+        'access_token_url' => env('SPOTIFY_ACCESS_TOKEN_URL'),
         'redirect_url' => env('SPOTIFY_REDIRECT_URL'),
     ],
 
