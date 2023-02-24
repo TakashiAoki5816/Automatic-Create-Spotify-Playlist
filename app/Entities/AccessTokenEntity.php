@@ -3,12 +3,11 @@
 namespace App\Entities;
 
 use App\Values\Code;
-use JsonSerializable;
 use App\Values\ClientId;
-use App\Values\GrantType;
-use App\Values\RedirectUrl;
 use App\Values\ClientSecret;
-use GuzzleHttp\Client;
+use App\Values\GrantType;
+use JsonSerializable;
+use App\Values\RedirectUrl;
 
 /**
  * [アクセストークンエンティティ]

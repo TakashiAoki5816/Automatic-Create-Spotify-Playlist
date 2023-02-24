@@ -82,60 +82,27 @@ class SpotifyController extends Controller
         return response()->json($result);
     }
 
-    public function getUserProfile()
-    {
-        $accessToken = (new Request)->session()->get('access_token');
-        $response = $this->guzzleClient->request(
-            'GET',
-            "https://api.spotify.com/v1/me",
-            [
-                'auth' => [
-                    $accessToken
-                ],
-                'headers' => [
-                    'Content-Type' => 'application/json'
-                ],
-            ]
-        );
-        return $response;
-    }
-
     /**
-     * プレイリスト作成テスト
+     * オリジナルのプレイリストを作成
      *
+     * @param Request $request
      * @return
      */
-    public function createPlaylist(Request $request)
+    public function createPlayList(Request $request)
     {
         $accessToken = $request->session()->get('access_token');
-        $response = $this->guzzleClient->request(
-            'GET',
-            "https://api.spotify.com/v1/me",
-            [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ],
-            ]
-        );
-        $bodyContent = json_decode($response->getBody()->getContents());
-        $userId = $bodyContent->id;
-        $response = $this->guzzleClient->request(
-            'POST',
-            "https://api.spotify.com/v1/users/{$userId}/playlists",
-            [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ],
-                'json' => [
-                    "name" => "Laravelテストプレイリスト作成",
-                    "description" => "Laravelテストプレイリスト description",
-                    "public" => true
-                ]
-            ]
-        );
+        $response = $this->spotifyService->createPlayList($accessToken);
+        // プレイリストから曲を取得
+        $response1 = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
+        $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
+        // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
+        $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
+        // // 似たようなメソッドを量産してしまっているため、一つのメソッドに共通化する、引数にHTTPメソッド・パラメータ・各種IDで定義・それぞれの引数は値オブジェクトで定義が良い
+        // $content = json_decode($response3->getBody());
+
+
+        $response = $this->spotifyService->addItemToPlaylist($accessToken);
         return response()->json($response);
     }
 }
