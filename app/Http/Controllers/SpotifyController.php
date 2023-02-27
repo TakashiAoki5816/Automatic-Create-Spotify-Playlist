@@ -91,18 +91,17 @@ class SpotifyController extends Controller
     public function createPlayList(Request $request)
     {
         $accessToken = $request->session()->get('access_token');
-        $response = $this->spotifyService->createPlayList($accessToken);
+        // $this->spotifyService->createPlayList($accessToken);
         // プレイリストから曲を取得
-        $response1 = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
-        $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
+        $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
+        // $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
         // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
-        $response3 = $this->spotifyService->fetchArtistData($accessToken);
+        // $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
-        // // 似たようなメソッドを量産してしまっているため、一つのメソッドに共通化する、引数にHTTPメソッド・パラメータ・各種IDで定義・それぞれの引数は値オブジェクトで定義が良い
-        // $content = json_decode($response3->getBody());
+        $content = json_decode($response->getBody());
 
 
-        $response = $this->spotifyService->addItemToPlaylist($accessToken);
+        // $response = $this->spotifyService->addItemToPlaylist($accessToken);
         return response()->json($response);
     }
 }

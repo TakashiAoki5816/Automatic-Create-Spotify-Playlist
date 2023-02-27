@@ -2,45 +2,28 @@
 
 namespace App\Http\Services;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use App\Http\Services\GuzzleService;
 
 class SpotifyService
 {
-    protected $baseApiUrl = "https://api.spotify.com/v1/";
-
-    protected $guzzleClient;
+    protected $guzzleService;
     /**
      * SpotifyService Constructor
      *
-     * @param Client $client
+     * @param GuzzleService $guzzleService
      */
-    public function __construct(Client $guzzleClient)
+    public function __construct(GuzzleService $guzzleService)
     {
-        $this->guzzleClient = $guzzleClient;
-    }
-
-    public function sendRequest($accessToken, $method, $uri, $formData = null)
-    {
-        return $this->guzzleClient->request(
-            $method,
-            $this->baseApiUrl . $uri,
-            [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => $formData,
-            ],
-        );
+        $this->guzzleService = $guzzleService;
     }
 
     /**
      * プレイリストを作成
      *
-     * @return Response
+     * @return GuzzleResponse
      */
-    public function createPlayList($accessToken): Response
+    public function createPlayList($accessToken): GuzzleResponse
     {
         $userId = $this->getUserId($accessToken);
         $formData = [
@@ -49,33 +32,33 @@ class SpotifyService
             "public" => true,
         ];
 
-        return $this->sendRequest($accessToken, "POST", "users/{$userId}/playlists", $formData);
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "users/{$userId}/playlists", $formData);
     }
 
     public function getUserId(string $accessToken): string
     {
-        $response = $this->sendRequest($accessToken, "GET", "me");
+        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "me");
 
         $content = json_decode($response->getBody()->getContents());
         return $content->id;
     }
 
-    public function fetchItemsFromPlaylist(string $accessToken)
+    public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
     {
-        return $this->sendRequest($accessToken, "GET", "playlists/1lCObPysmM50HzRZcpErJv/tracks");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
     }
 
-    public function fetchTrackDetails(string $accessToken)
+    public function fetchTrackDetails(string $accessToken): GuzzleResponse
     {
-        return $this->sendRequest($accessToken, "GET", "tracks/36p84XGX2lLHGudXzf3Krq");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "tracks/36p84XGX2lLHGudXzf3Krq");
     }
 
-    public function fetchArtistData(string $accessToken)
+    public function fetchArtistData(string $accessToken): GuzzleResponse
     {
-        return $this->sendRequest($accessToken, "GET", "artists/3Nrfpe0tUJi4K4DXYWgMUX");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
-    public function addItemToPlaylist(string $accessToken)
+    public function addItemToPlaylist(string $accessToken): GuzzleResponse
     {
         $formData = [
             "uris" => [
@@ -83,6 +66,6 @@ class SpotifyService
             ],
             "position" => 0,
         ];
-        return $this->sendRequest($accessToken, "POST", "playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
     }
 }
