@@ -2,51 +2,70 @@
 
 namespace App\Http\Services;
 
-use Spotify;
-use GuzzleHttp\Client;
-use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use App\Http\Services\GuzzleService;
 
 class SpotifyService
 {
-    protected $client;
+    protected $guzzleService;
     /**
      * SpotifyService Constructor
      *
-     * @param Client $client
+     * @param GuzzleService $guzzleService
      */
-    public function __construct(Client $client)
+    public function __construct(GuzzleService $guzzleService)
     {
-        $this->client = $client;
+        $this->guzzleService = $guzzleService;
     }
 
     /**
-     * Access Token取得リクエストを行う
+     * プレイリストを作成
      *
-     * @param string $code
-     * @return Response
+     * @return GuzzleResponse
      */
-    public function getAccessTokenRequest(string $code): Response
+    public function createPlayList($accessToken): GuzzleResponse
     {
-        $url = 'https://accounts.spotify.com/api/token';
-        $params = [
-            'client_id' => env('SPOTIFY_CLIENT_ID'),
-            'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
-            'grant_type' => 'authorization_code',
-            'code' => $code,
-            'redirect_uri' => 'http://localhost'
+        $userId = $this->getUserId($accessToken);
+        $formData = [
+            "name" => "Laravelテストプレイリストdemo作成",
+            "description" => "Laravelテストプレイリスト description",
+            "public" => true,
         ];
-        return Http::asForm()->post($url, $params);
+
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "users/{$userId}/playlists", $formData);
     }
 
-    /**
-     * 認可したいURLを取得
-     *
-     * @return string
-     */
-    public function getAuthorizeUrl(): string
+    public function getUserId(string $accessToken): string
     {
-        $baseUrl = 'https://accounts.spotify.com/authorize';
-        return $baseUrl . '?client_id=' . env('SPOTIFY_CLIENT_ID') . '&response_type=code' . '&redirect_uri=http://localhost' . '&scope=playlist-modify-public';
+        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "me");
+
+        $content = json_decode($response->getBody()->getContents());
+        return $content->id;
+    }
+
+    public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
+    {
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
+    }
+
+    public function fetchTrackDetails(string $accessToken): GuzzleResponse
+    {
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "tracks/36p84XGX2lLHGudXzf3Krq");
+    }
+
+    public function fetchArtistData(string $accessToken): GuzzleResponse
+    {
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "artists/3Nrfpe0tUJi4K4DXYWgMUX");
+    }
+
+    public function addItemToPlaylist(string $accessToken): GuzzleResponse
+    {
+        $formData = [
+            "uris" => [
+                "spotify:track:1yt4wO7dKCwsfjch8SN9aU"
+            ],
+            "position" => 0,
+        ];
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
     }
 }

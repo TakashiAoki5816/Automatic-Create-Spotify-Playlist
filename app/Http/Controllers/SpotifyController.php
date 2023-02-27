@@ -2,99 +2,106 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AccessTokenRequest;
+use App\Http\Requests\AuthorizeRequest;
+use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
-use Spotify;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Spotify;
 
 class SpotifyController extends Controller
 {
     protected $spotifyService;
+    protected $guzzleService;
     protected $guzzleClient;
+
     /**
      * SpotifyController Constructor
      *
      * @param Spotify $spotify
      */
-    public function __construct
-    (
+    public function __construct(
         SpotifyService $spotifyService,
+        GuzzleService $guzzleService,
         Client $client,
-    )
-    {
+    ) {
         $this->spotifyService = $spotifyService;
+        $this->guzzleService = $guzzleService;
         $this->guzzleClient = $client;
     }
 
     /**
-     * Access Tokenを取得
+     * 認可したいURLを返却
      *
-     * @param Request $request
      * @return JsonResponse
      */
-    public function getAccessToken(Request $request)
+    public function authorization(AuthorizeRequest $request): JsonResponse
     {
-        $response = $this->spotifyService->getAccessTokenRequest($request->input('code'));
-        $accessToken = json_decode($response->body());
-        $request->session()->put('access_token', $accessToken->access_token);
-
-        return response()->json($response->body());
-    }
-
-    public function getUserProfile()
-    {
-        $accessToken = (new Request)->session()->get('access_token');
-        $response = $this->guzzleClient->request(
-            'GET',
-            "https://api.spotify.com/v1/me",
-            [
-                'auth' => [
-                    $accessToken
-                ],
-                'headers' => [
-                    'Content-Type' => 'application/json'
-                ],
-            ]
-        );
-        return $response;
+        try {
+            $authorizeEntity = $request->toEntity();
+            $result = [
+                'status' => 200,
+                'url' => $authorizeEntity->retrieveRequestUrl(),
+            ];
+        } catch (\Exception $e) {
+            $result = [
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ];
+        }
+        return response()->json($result, $result['status']);
     }
 
     /**
-     * プレイリスト作成テスト
+     * Access Tokenを取得し、セッションに格納
      *
+     * @param AccessTokenRequest $request
+     * @return JsonResponse
+     */
+    public function getAccessToken(AccessTokenRequest $request): JsonResponse
+    {
+        try {
+            $accessTokenEntity = $request->toEntity();
+            list($url, $body) = $accessTokenEntity->retrieveRequestItems();
+            $response = $this->guzzleService->requestWithBody($url, $body);
+            $request->storeAccessTokenToSession(json_decode($response->getBody()));
+
+            $result = [
+                'status' => 200,
+                'message' => 'アクセストークンを取得しました。',
+            ];
+        } catch (\Exception $e) {
+            $result = [
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ];
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * オリジナルのプレイリストを作成
+     *
+     * @param Request $request
      * @return
      */
-    public function createPlaylist(Request $request)
+    public function createPlayList(Request $request)
     {
         $accessToken = $request->session()->get('access_token');
-        $response = $this->guzzleClient->request(
-            'GET',
-            "https://api.spotify.com/v1/me",
-            [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ],
-            ]
-        );
-        $bodyContent = json_decode($response->getBody()->getContents());
-        $userId = $bodyContent->id;
-        $response = $this->guzzleClient->request(
-            'POST',
-            "https://api.spotify.com/v1/users/{$userId}/playlists",
-            [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ],
-                'json' => [
-                    "name" => "Laravelテストプレイリスト作成",
-                    "description" => "Laravelテストプレイリスト description",
-                    "public" => true
-                ]
-            ]
-        );
+        // $this->spotifyService->createPlayList($accessToken);
+        // プレイリストから曲を取得
+        $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
+        // $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
+        // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
+        // $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
+        $content = json_decode($response->getBody());
+
+
+        // $response = $this->spotifyService->addItemToPlaylist($accessToken);
         return response()->json($response);
     }
 }
