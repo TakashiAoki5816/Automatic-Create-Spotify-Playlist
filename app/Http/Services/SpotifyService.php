@@ -32,7 +32,7 @@ class SpotifyService
             "public" => true,
         ];
 
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "users/{$userId}/playlists", $formData);
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
     }
 
     public function getUserId(string $accessToken): string
@@ -45,17 +45,17 @@ class SpotifyService
 
     public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
     {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
     }
 
     public function fetchTrackDetails(string $accessToken): GuzzleResponse
     {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "tracks/36p84XGX2lLHGudXzf3Krq");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/tracks/36p84XGX2lLHGudXzf3Krq");
     }
 
     public function fetchArtistData(string $accessToken): GuzzleResponse
     {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "artists/3Nrfpe0tUJi4K4DXYWgMUX");
+        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
     public function addItemToPlaylist(string $accessToken): GuzzleResponse
@@ -66,6 +66,6 @@ class SpotifyService
             ],
             "position" => 0,
         ];
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
     }
 }
