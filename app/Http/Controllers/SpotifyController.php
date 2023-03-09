@@ -90,8 +90,14 @@ class SpotifyController extends Controller
      */
     public function createPlayList(Request $request)
     {
+        // $playlistName = $request->input('playlist_name');
+        $playlistName = 'Laravelテストプレイリストdemo作成';
         $accessToken = $request->session()->get('access_token');
         // $this->spotifyService->createPlayList($accessToken);
+        $this->spotifyService->retrieveCurrentPlayLists($accessToken);
+        // 作成されたプレイリストのIDを取得
+        // $this->spotifyService->retrievePlaylistId($accessToken, $playlistName);
+
         // プレイリストから曲を取得
         $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
         // $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
@@ -99,9 +105,8 @@ class SpotifyController extends Controller
         // $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
         $content = json_decode($response->getBody());
-
-
-        // $response = $this->spotifyService->addItemToPlaylist($accessToken);
+        $trackIds = $this->spotifyService->retrieveTrackIds($content->items);
+        $response = $this->spotifyService->addItemToPlaylist($accessToken, $trackIds);
         return response()->json($response);
     }
 }

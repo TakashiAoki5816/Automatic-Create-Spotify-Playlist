@@ -37,10 +37,22 @@ class SpotifyService
 
     public function getUserId(string $accessToken): string
     {
-        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "me");
+        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
 
         $content = json_decode($response->getBody()->getContents());
         return $content->id;
+    }
+
+    public function retrieveCurrentPlayLists(string $accessToken)
+    {
+        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me/playlists");
+
+        $content = json_decode($response->getBody()->getContents());
+        return $content;
+    }
+
+    public function retrievePlaylistId($accessToken, $playlistName)
+    {
     }
 
     public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
@@ -58,14 +70,23 @@ class SpotifyService
         return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
-    public function addItemToPlaylist(string $accessToken): GuzzleResponse
+    public function retrieveTrackIds($tracks)
     {
+        return collect($tracks)->map(function ($trackInfo) {
+            return $trackInfo->track->id;
+        })->toArray();
+    }
+
+    public function addItemToPlaylist(string $accessToken, $trackIds): GuzzleResponse
+    {
+        $trackUrisArr = collect($trackIds)->map(function ($trackId) {
+            return 'spotify:track:' . $trackId;
+        })->toArray();
+
         $formData = [
-            "uris" => [
-                "spotify:track:1yt4wO7dKCwsfjch8SN9aU"
-            ],
+            "uris" => $trackUrisArr,
             "position" => 0,
         ];
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/3OFS2fzeVGK1pfn9ujk4SS/tracks", $formData);
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/5Lon8tamI9cexEHouArVIM/tracks", $formData);
     }
 }
