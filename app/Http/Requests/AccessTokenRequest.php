@@ -50,7 +50,7 @@ class AccessTokenRequest extends FormRequest
     /**
      * @return AccessTokenEntity
      */
-    public function toEntity()
+    public function toEntity(): AccessTokenEntity
     {
         $code = $this->input('code');
 
