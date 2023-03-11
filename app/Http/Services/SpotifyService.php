@@ -19,13 +19,13 @@ class SpotifyService
     }
 
     /**
-     * プレイリストを作成
+     * プレイリスト作成
      *
      * @return GuzzleResponse
      */
     public function createPlayList($accessToken): GuzzleResponse
     {
-        $userId = $this->getUserId($accessToken);
+        $userId = $this->retrieveUserId($accessToken);
         $formData = [
             "name" => "Laravelテストプレイリストdemo作成",
             "description" => "Laravelテストプレイリスト description",
@@ -35,20 +35,23 @@ class SpotifyService
         return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
     }
 
-    public function getUserId(string $accessToken): string
+    public function toDecodeJson($response)
+    {
+        return json_decode($response->getBody()->getContents());
+    }
+
+    public function retrieveUserId(string $accessToken): string
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
+        $content = $this->toDecodeJson($response);
 
-        $content = json_decode($response->getBody()->getContents());
         return $content->id;
     }
 
     public function retrieveCurrentPlayLists(string $accessToken)
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me/playlists");
-
-        $content = json_decode($response->getBody()->getContents());
-        return $content;
+        return $this->toDecodeJson($response);
     }
 
     public function retrievePlaylistId($accessToken, $playlistName)
@@ -58,11 +61,6 @@ class SpotifyService
     public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
     {
         return $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
-    }
-
-    public function fetchTrackDetails(string $accessToken): GuzzleResponse
-    {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/tracks/36p84XGX2lLHGudXzf3Krq");
     }
 
     public function fetchArtistData(string $accessToken): GuzzleResponse

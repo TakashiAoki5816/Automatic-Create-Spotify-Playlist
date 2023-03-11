@@ -47,7 +47,7 @@ class SpotifyController extends Controller
             ];
         } catch (\Exception $e) {
             $result = [
-                'status' => 500,
+                'status' => $e->getCode(),
                 'error' => $e->getMessage(),
             ];
         }
@@ -74,7 +74,7 @@ class SpotifyController extends Controller
             ];
         } catch (\Exception $e) {
             $result = [
-                'status' => 500,
+                'status' => $e->getCode(),
                 'error' => $e->getMessage(),
             ];
         }
@@ -100,13 +100,13 @@ class SpotifyController extends Controller
 
         // プレイリストから曲を取得
         $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
-        // $response2 = $this->spotifyService->fetchTrackDetails($accessToken); // これいらないかも
+        // ArtistDataからじゃないとジャンルを取得することができない
         // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
         // $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
         $content = json_decode($response->getBody());
         $trackIds = $this->spotifyService->retrieveTrackIds($content->items);
-        $response = $this->spotifyService->addItemToPlaylist($accessToken, $trackIds);
+        // $response = $this->spotifyService->addItemToPlaylist($accessToken, $trackIds);
         return response()->json($response);
     }
 }
