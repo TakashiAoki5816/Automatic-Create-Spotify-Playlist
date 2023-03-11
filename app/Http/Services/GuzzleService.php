@@ -43,7 +43,7 @@ class GuzzleService
     }
 
     /**
-     * リクエストボディ付きリクエスト
+     * ボディ付きリクエスト
      *
      * @param string $url
      * @param array $body
