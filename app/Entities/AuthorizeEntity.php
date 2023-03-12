@@ -57,7 +57,7 @@ class AuthorizeEntity implements JsonSerializable
      */
     public function retrieveRequestUrl(): string
     {
-        return $this->accountUrl()->value() . '?client_id=' . $this->clientId()->value() . '&response_type=' . $this->responseType()->value() . '&redirect_uri=' . $this->redirectUrl()->value() . '&scope=' . $this->scope()->value();
+        return $this->accountUrl()->value() . '?client_id=' . $this->clientId()->value() . '&response_type=' . $this->responseType()->value() . '&redirect_uri=' . $this->redirectUrl()->value() . '&scope=' . $this->scope()->value() . '&show_dialog=true';
     }
 
     public function __construct(
