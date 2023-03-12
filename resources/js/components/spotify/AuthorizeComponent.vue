@@ -5,7 +5,7 @@
 export default {
     methods: {
         authorizeSpotify: function () {
-            axios.get('api/spotify/authorization')
+            axios.get('/api/spotify/authorization')
             .then(function (response) {
                 window.location.href = response.data.url;
             })

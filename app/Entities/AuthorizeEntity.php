@@ -7,6 +7,7 @@ use App\Values\ClientId;
 use App\Values\RedirectUrl;
 use App\Values\ResponseType;
 use App\Values\Scope;
+use Illuminate\Support\Str;
 use JsonSerializable;
 
 /**
@@ -45,6 +46,11 @@ class AuthorizeEntity implements JsonSerializable
         return $this->scope;
     }
 
+    protected function state()
+    {
+        return Str::random(16);
+    }
+
     public function jsonSerialize(): array
     {
         return [];
@@ -57,7 +63,13 @@ class AuthorizeEntity implements JsonSerializable
      */
     public function retrieveRequestUrl(): string
     {
-        return $this->accountUrl()->value() . '?client_id=' . $this->clientId()->value() . '&response_type=' . $this->responseType()->value() . '&redirect_uri=' . $this->redirectUrl()->value() . '&scope=' . $this->scope()->value() . '&show_dialog=true';
+        return $this->accountUrl()->value()
+            . '?client_id=' . $this->clientId()->value()
+            . '&response_type=' . $this->responseType()->value()
+            . '&redirect_uri=' . $this->redirectUrl()->value()
+            . '&scope=' . $this->scope()->value()
+            . '&state=' . $this->state()
+            . '&show_dialog=true';
     }
 
     public function __construct(
