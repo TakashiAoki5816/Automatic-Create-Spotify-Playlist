@@ -18,4 +18,9 @@ Route::middleware(['web'])->group(function () {
     Route::get('/', function () {
         return view('layouts.app');
     });
+    Route::prefix('spotify')->group(function () {
+        Route::get('/callback', function () {
+            return view('layouts.app');
+        });
+    });
 });
