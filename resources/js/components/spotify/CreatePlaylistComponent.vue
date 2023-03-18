@@ -8,7 +8,7 @@ export default {
     methods: {
         createPlaylist: function () {
             if (confirm('プレイリストを作成しますか？')) {
-                axios.get('api/spotify/createPlaylist')
+                axios.get('/api/spotify/createPlaylist')
                 .then(function (r) {
                     console.log(r);
                 })

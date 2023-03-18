@@ -8,6 +8,7 @@ use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Spotify;
 
@@ -60,11 +61,12 @@ class SpotifyController extends Controller
      * @param AccessTokenRequest $request
      * @return JsonResponse
      */
-    public function getAccessToken(AccessTokenRequest $request): JsonResponse
+    public function getAccessToken(AccessTokenRequest $request)
     {
         try {
             $accessTokenEntity = $request->toEntity();
             list($url, $body) = $accessTokenEntity->retrieveRequestItems();
+
             $response = $this->guzzleService->requestWithBody($url, $body);
             $request->storeAccessTokenToSession(json_decode($response->getBody()));
 
@@ -79,7 +81,8 @@ class SpotifyController extends Controller
             ];
         }
 
-        return response()->json($result);
+        return redirect()->route('main.index');
+        // return response()->json($result);
     }
 
     /**
@@ -91,13 +94,11 @@ class SpotifyController extends Controller
     public function createPlayList(Request $request)
     {
         // $playlistName = $request->input('playlist_name');
-        $playlistName = 'Laravelテストプレイリストdemo作成';
         $accessToken = $request->session()->get('access_token');
         // $this->spotifyService->createPlayList($accessToken);
+        // $this->spotifyService->retrievePlaylistId($accessToken, $playlistName);
         $this->spotifyService->retrieveCurrentPlayLists($accessToken);
         // 作成されたプレイリストのIDを取得
-        // $this->spotifyService->retrievePlaylistId($accessToken, $playlistName);
-
         // プレイリストから曲を取得
         $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
         // ArtistDataからじゃないとジャンルを取得することができない

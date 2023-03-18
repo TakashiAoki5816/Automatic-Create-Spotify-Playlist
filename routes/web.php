@@ -15,12 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware(['web'])->group(function () {
-    Route::get('/', function () {
-        return view('layouts.app');
-    });
-    Route::prefix('spotify')->group(function () {
-        Route::get('/callback', function () {
-            return view('layouts.app');
-        });
+    Route::name('main.')->group(function () {
+        Route::get('/', ['App\Http\Controllers\MainController'::class, 'index'])->name('index');
     });
 });
