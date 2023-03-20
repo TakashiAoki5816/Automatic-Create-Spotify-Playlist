@@ -1,18 +1,13 @@
 <template>
-    <a href='#' v-on:click="authorizeSpotify">Spotifyにログインする</a>
+    <a href='#' @click="authorizeSpotify">Spotifyにログインする</a>
 </template>
-<script>
-export default {
-    methods: {
-        authorizeSpotify: function () {
-            // axios.get('/api/spotify/authorization')
-            //     .then(function (response) {
-            //         window.location.href = response.data.url;
-            //     })
-            //     .catch(function (error) {
-            //         console.log(error);
-            //     });
+<script lang='ts'>
+import { defineComponent } from 'vue';
+import axios from 'axios';
 
+export default defineComponent({
+    setup() {
+        const authorizeSpotify = () => {
             axios.get('/api/spotify/authorization')
                 .then(response => {
                     window.location.href = response.data.url;
@@ -35,23 +30,23 @@ export default {
                 .catch(error => {
                     // エラーハンドリング
                 });
-        },
-        /**
-         * 特定のキーのパラメーターを取得
-         * @param {string} name
-         * @param {string|null} url
-         * @return {string}
-         */
-        // getParam: function (name, url) {
-        //     if (!url) url = window.location.href;
-        //     name = name.replace(/[\[\]]/g, "\\$&");
-        //     let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        //         results = regex.exec(url);
-        //     if (!results) return null;
-        //     if (!results[2]) return '';
-        //     return decodeURIComponent(results[2].replace(/\+/g, " "));
-        // },
-    }
-}
+        };
+
+        const getParam = (name, url) => {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        };
+
+        return {
+            authorizeSpotify,
+            getParam,
+        };
+    },
+});
 </script>
 
