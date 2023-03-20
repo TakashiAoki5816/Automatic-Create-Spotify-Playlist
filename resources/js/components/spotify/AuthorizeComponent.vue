@@ -3,13 +3,13 @@
 </template>
 <script lang='ts'>
 import { defineComponent } from 'vue';
-import axios from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 
 export default defineComponent({
     setup() {
-        const authorizeSpotify = () => {
+        const authorizeSpotify = (): void => {
             axios.get('/api/spotify/authorization')
-                .then(response => {
+                .then((response: AxiosResponse<{ url: string }>) => {
                     window.location.href = response.data.url;
 
                     // TODO ユーザー同意画面にて同意後にアクセストークンを取得できるようにする
@@ -27,12 +27,12 @@ export default defineComponent({
                     //     });
                     // });
                 })
-                .catch(error => {
+                .catch((error: AxiosError) => {
                     // エラーハンドリング
                 });
         };
 
-        const getParam = (name, url) => {
+        const getParam = (name:string, url?:string): string|null => {
             if (!url) url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
             let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),

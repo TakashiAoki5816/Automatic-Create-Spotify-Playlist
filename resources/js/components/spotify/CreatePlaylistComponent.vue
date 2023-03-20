@@ -6,17 +6,17 @@
 
 <script lang='ts'>
 import { defineComponent } from 'vue';
-import axios from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 
 export default defineComponent({
 	setup() {
-		const createPlaylist = () => {
+		const createPlaylist = (): void => {
 			if (confirm('プレイリストを作成しますか？')) {
 				axios.get('/api/spotify/createPlaylist')
-					.then(function (r) {
+					.then(function (r: AxiosResponse) {
 						console.log(r);
 					})
-					.catch(function (e) {
+					.catch(function (e: AxiosError) {
 						console.log(e);
 					});
 			}
