@@ -11,7 +11,7 @@ const createPlaylist = (): void => {
                 console.log(e);
             });
     }
-};
+}
 </script>
 
 <template>

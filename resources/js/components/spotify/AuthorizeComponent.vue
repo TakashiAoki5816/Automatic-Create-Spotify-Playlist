@@ -24,7 +24,7 @@ const authorizeSpotify = (): void => {
         .catch((error: AxiosError) => {
             // エラーハンドリング
         });
-};
+}
 
 const getParam = (name:string, url?:string): string|null => {
     if (!url) url = window.location.href;
@@ -34,7 +34,7 @@ const getParam = (name:string, url?:string): string|null => {
     if (!results) return null;
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, " "));
-};
+}
 </script>
 
 <template>
