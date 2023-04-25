@@ -8,8 +8,9 @@ use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Spotify;
 
 class SpotifyController extends Controller
@@ -36,23 +37,20 @@ class SpotifyController extends Controller
     /**
      * 認可したいURLを返却
      *
-     * @return JsonResponse
+     * @param AuthorizeRequest $request
+     * @throws $e
+     * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
      */
-    public function authorization(AuthorizeRequest $request): JsonResponse
+    public function authorization(AuthorizeRequest $request): Redirector|RedirectResponse
     {
         try {
             $authorizeEntity = $request->toEntity();
-            $result = [
-                'status' => 200,
-                'url' => $authorizeEntity->retrieveRequestUrl(),
-            ];
+            $url = $authorizeEntity->retrieveRequestUrl();
         } catch (\Exception $e) {
-            $result = [
-                'status' => $e->getCode(),
-                'error' => $e->getMessage(),
-            ];
+            throw $e;
         }
-        return response()->json($result, $result['status']);
+
+        return redirect($url);
     }
 
     /**

@@ -1,6 +1,12 @@
 <script setup lang='ts'>
-import { ref, reactive, watch } from 'vue';
+import { reactive } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
+import { FormData } from './@types/index';
+
+const formData: FormData = reactive({
+    'playlist_name': '',
+    'genres': null,
+});
 
 const createPlaylist = (): void => {
     if (confirm('プレイリストを作成しますか？')) {
@@ -13,22 +19,10 @@ const createPlaylist = (): void => {
             });
     }
 }
-
-const playlist_name = ref<string>('');
-const genres = ref<number|null>(null);
-
-type FormData = {
-    playlist_name: string,
-    genres: number|null,
-}
-const formData: FormData = reactive({
-    'playlist_name': playlist_name,
-    'genres': genres,
-});
 </script>
 
 <template>
-    <div class='w-1/2 m-auto'>
+    <div class='w-1/2 mt-10 m-auto'>
         <FormKit
             type="form"
             :submit-attrs="{
@@ -43,7 +37,7 @@ const formData: FormData = reactive({
                 validation="required"
                 label-class="block mb-2 text-sm text-gray-900 dark:text-white"
                 input-class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                v-model="playlist_name"
+                v-model="formData.playlist_name"
             />
             <FormKit
                 type="checkbox"
@@ -56,7 +50,7 @@ const formData: FormData = reactive({
                 wrapper-class="flex items-center mb-4"
                 label-class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
                 input-class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                v-model="genres"
+                v-model="formData.genres"
             />
         </FormKit>
     </div>
