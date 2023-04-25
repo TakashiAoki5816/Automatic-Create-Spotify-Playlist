@@ -1,7 +1,12 @@
 <script setup lang='ts'>
-import { ref, reactive, watch } from 'vue';
+import { reactive } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { FormData } from './@types/index';
+
+const formData: FormData = reactive({
+    'playlist_name': '',
+    'genres': null,
+});
 
 const createPlaylist = (): void => {
     if (confirm('プレイリストを作成しますか？')) {
@@ -14,15 +19,10 @@ const createPlaylist = (): void => {
             });
     }
 }
-
-const formData: FormData = reactive({
-    'playlist_name': '',
-    'genres': null,
-});
 </script>
 
 <template>
-    <div class='w-1/2 m-auto'>
+    <div class='w-1/2 mt-10 m-auto'>
         <FormKit
             type="form"
             :submit-attrs="{
