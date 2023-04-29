@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AuthorizeException;
 use App\Http\Requests\AccessTokenRequest;
 use App\Http\Requests\AuthorizeRequest;
 use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
@@ -23,6 +23,8 @@ class SpotifyController extends Controller
      * SpotifyController Constructor
      *
      * @param Spotify $spotify
+     * @param GuzzleService $guzzleService
+     * @param Client $client
      */
     public function __construct(
         SpotifyService $spotifyService,
@@ -38,28 +40,29 @@ class SpotifyController extends Controller
      * 認可したいURLを返却
      *
      * @param AuthorizeRequest $request
-     * @throws $e
+     * @throws AuthorizeException $e
      * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
      */
     public function authorization(AuthorizeRequest $request): Redirector|RedirectResponse
     {
         try {
             $authorizeEntity = $request->toEntity();
-            $url = $authorizeEntity->retrieveRequestUrl();
-        } catch (\Exception $e) {
+            $authorizeUrl = $authorizeEntity->retrieveRequestUrl();
+        } catch (AuthorizeException $e) {
             throw $e;
         }
 
-        return redirect($url);
+        return redirect($authorizeUrl);
     }
 
     /**
      * Access Tokenを取得し、セッションに格納
      *
      * @param AccessTokenRequest $request
-     * @return JsonResponse
+     * @throws CanNotGetAccessTokenException $e
+     * @return RedirectResponse
      */
-    public function getAccessToken(AccessTokenRequest $request)
+    public function getAccessToken(AccessTokenRequest $request): RedirectResponse
     {
         try {
             $accessTokenEntity = $request->toEntity();
@@ -67,20 +70,11 @@ class SpotifyController extends Controller
 
             $response = $this->guzzleService->requestWithBody($url, $body);
             $request->storeAccessTokenToSession(json_decode($response->getBody()));
-
-            $result = [
-                'status' => 200,
-                'message' => 'アクセストークンを取得しました。',
-            ];
-        } catch (\Exception $e) {
-            $result = [
-                'status' => $e->getCode(),
-                'error' => $e->getMessage(),
-            ];
+        } catch (CanNotGetAccessTokenException $e) {
+            throw $e;
         }
 
         return redirect()->route('main.index');
-        // return response()->json($result);
     }
 
     /**
