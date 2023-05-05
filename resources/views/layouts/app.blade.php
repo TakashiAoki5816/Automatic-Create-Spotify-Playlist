@@ -21,7 +21,6 @@
 
 <body class="antialiased">
     <div id="app">
-        <authorize-component></authorize-component>
         <create-playlist-component></create-playlist-component>
     </div>
 </body>

@@ -48,13 +48,21 @@ class SpotifyService
         return $content->id;
     }
 
-    public function retrieveCurrentPlayLists(string $accessToken)
+    public function retrieveMyPlayList(string $accessToken)
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me/playlists");
         return $this->toDecodeJson($response);
     }
 
-    public function retrievePlaylistId($accessToken, $playlistName)
+    public function retrieveTargetPlaylistItems(string $accessToken, array $targetPlaylistIds)
+    {
+        collect($targetPlaylistIds)->map(function ($playlistId) use ($accessToken) {
+            $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
+            $response = $this->toDecodeJson($response);
+        });
+    }
+
+    public function retrievePlaylistById($accessToken, $playlistId)
     {
     }
 

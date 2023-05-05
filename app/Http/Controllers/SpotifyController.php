@@ -8,6 +8,7 @@ use App\Http\Requests\AuthorizeRequest;
 use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use GuzzleHttp\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
@@ -78,6 +79,20 @@ class SpotifyController extends Controller
     }
 
     /**
+     * 自身のプレイリストを取得する
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function retrieveMyPlaylist(Request $request): JsonResponse
+    {
+        $accessToken = $request->session()->get('access_token');
+        $playlists = $this->spotifyService->retrieveMyPlayList($accessToken);
+
+        return response()->json($playlists);
+    }
+
+    /**
      * オリジナルのプレイリストを作成
      *
      * @param Request $request
@@ -88,8 +103,8 @@ class SpotifyController extends Controller
         // $playlistName = $request->input('playlist_name');
         $accessToken = $request->session()->get('access_token');
         // $this->spotifyService->createPlayList($accessToken);
-        // $this->spotifyService->retrievePlaylistId($accessToken, $playlistName);
-        $this->spotifyService->retrieveCurrentPlayLists($accessToken);
+        $this->spotifyService->retrieveTargetPlaylistItems($accessToken, $request->input('target_playlist_ids'));
+        $this->spotifyService->retrieveCurrentPlayList($accessToken);
         // 作成されたプレイリストのIDを取得
         // プレイリストから曲を取得
         $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
