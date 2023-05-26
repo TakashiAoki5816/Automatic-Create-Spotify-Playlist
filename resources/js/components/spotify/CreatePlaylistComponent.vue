@@ -1,12 +1,28 @@
 <script setup lang='ts'>
-import { ref, reactive, onMounted, watchEffect } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import { FormData } from './@types/index';
+import { Playlists, FormData } from './@types/index';
+
+interface Playlists {
+    id: number | null,
+    name: string,
+    images: {
+        url: string,
+        height: number,
+        width: number,
+    }[],
+}
+
+// const playlists = reactive<Playlists>({
+//     id: null,
+//     name: '',
+//     images: [],
+// });
 
 const playlists = ref([]);
 
 const formData: FormData = reactive({
-    'target_playlist': [],
+    'target_playlist_ids': [],
     'playlist_name': '',
     'genres': [],
 });
@@ -15,7 +31,7 @@ const formData: FormData = reactive({
  * マイプレイリストを取得
  * @return {void}
  */
-const retrieveMyPlaylist = async (): Promise<void> => {
+const retrieveMyPlaylist = async () => {
     try {
         const response: AxiosResponse = await axios.get('/api/spotify/myPlaylist');
         playlists.value = response.data.items;
@@ -36,9 +52,9 @@ const createPlaylist = (): void => {
     }
 }
 
-onMounted(async () => {
+onMounted(() => {
     console.log('mountedの中')
-    await retrieveMyPlaylist();
+    retrieveMyPlaylist();
 })
 </script>
 
@@ -53,7 +69,7 @@ onMounted(async () => {
         >
             <ul class="w-full flex flex-wrap">
                 <li v-for="(playlist, i) in playlists" :key="i" class="playlist-item">
-                    <input type="checkbox" name="target_playlist_ids" :value="playlist.id" v-model="formData.target_playlist">{{ playlist.name}}
+                    <input type="checkbox" name="target_playlist_ids" :value="playlist.id" v-model="formData.target_playlist_ids">{{ playlist.name}}
                     <img :src="playlist.images[1]?.url" :height="playlist.images[1]?.height" :width="playlist.images[1]?.width">
                 </li>
             </ul>
