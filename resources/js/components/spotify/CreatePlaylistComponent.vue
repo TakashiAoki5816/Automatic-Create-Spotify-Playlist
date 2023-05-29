@@ -1,12 +1,44 @@
 <script setup lang='ts'>
-import { reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import { FormData } from './@types/index';
+import { Playlists, FormData } from './@types/index';
+
+interface Playlists {
+    id: number | null,
+    name: string,
+    images: {
+        url: string,
+        height: number,
+        width: number,
+    }[],
+}
+
+// const playlists = reactive<Playlists>({
+//     id: null,
+//     name: '',
+//     images: [],
+// });
+
+const playlists = ref([]);
 
 const formData: FormData = reactive({
+    'target_playlist_ids': [],
     'playlist_name': '',
-    'genres': null,
+    'genres': [],
 });
+
+/**
+ * マイプレイリストを取得
+ * @return {void}
+ */
+const retrieveMyPlaylist = async () => {
+    try {
+        const response: AxiosResponse = await axios.get('/api/spotify/myPlaylist');
+        playlists.value = response.data.items;
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 const createPlaylist = (): void => {
     if (confirm('プレイリストを作成しますか？')) {
@@ -19,6 +51,11 @@ const createPlaylist = (): void => {
             });
     }
 }
+
+onMounted(() => {
+    console.log('mountedの中')
+    retrieveMyPlaylist();
+})
 </script>
 
 <template>
@@ -30,12 +67,18 @@ const createPlaylist = (): void => {
             }"
             @submit="createPlaylist"
         >
+            <ul class="w-full flex flex-wrap">
+                <li v-for="(playlist, i) in playlists" :key="i" class="playlist-item">
+                    <input type="checkbox" name="target_playlist_ids" :value="playlist.id" v-model="formData.target_playlist_ids">{{ playlist.name}}
+                    <img :src="playlist.images[1]?.url" :height="playlist.images[1]?.height" :width="playlist.images[1]?.width">
+                </li>
+            </ul>
             <FormKit
                 type="text"
                 label="プレイリスト名"
                 name="playlist_name"
                 validation="required"
-                label-class="block mb-2 text-sm text-gray-900 dark:text-white"
+                label-class="block mt-20 mb-2 text-sm text-gray-900 dark:text-white"
                 input-class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                 v-model="formData.playlist_name"
             />
@@ -55,3 +98,17 @@ const createPlaylist = (): void => {
         </FormKit>
     </div>
 </template>
+
+<style scoped>
+.playlist-item {
+    width: 350px;
+    height: 350px;
+    margin-left: 20px;
+}
+.playlist-item:nth-child(4n + 1) {
+    margin-left: 0;
+}
+img {
+    max-width: none;
+}
+</style>

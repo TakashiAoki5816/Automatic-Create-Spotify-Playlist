@@ -18,6 +18,20 @@ class GuzzleService
         $this->guzzleClient = $guzzleClient;
     }
 
+    public function requestByUrl($accessToken, $method, string $url)
+    {
+        return $this->guzzleClient->request(
+            $method,
+            $url,
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
+                ],
+            ],
+        );
+    }
+
     /**
      * APIリクエスト
      *
