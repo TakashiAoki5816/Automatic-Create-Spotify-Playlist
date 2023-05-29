@@ -7,34 +7,34 @@ use App\Http\Requests\AccessTokenRequest;
 use App\Http\Requests\AuthorizeRequest;
 use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
-use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
 use Spotify;
+use App\Http\Requests\CreatePlaylistRequest;
 
 class SpotifyController extends Controller
 {
-    protected $spotifyService;
-    protected $guzzleService;
-    protected $guzzleClient;
+    /**
+     * @var $spotifyService
+     * @var $guzzleService
+     */
+    private $spotifyService;
+    private $guzzleService;
 
     /**
      * SpotifyController Constructor
      *
      * @param Spotify $spotify
      * @param GuzzleService $guzzleService
-     * @param Client $client
      */
     public function __construct(
         SpotifyService $spotifyService,
         GuzzleService $guzzleService,
-        Client $client,
     ) {
         $this->spotifyService = $spotifyService;
         $this->guzzleService = $guzzleService;
-        $this->guzzleClient = $client;
     }
 
     /**
@@ -95,16 +95,18 @@ class SpotifyController extends Controller
     /**
      * オリジナルのプレイリストを作成
      *
-     * @param Request $request
+     * @param CreatePlaylistRequest $request
      * @return
      */
-    public function createPlayList(Request $request)
+    public function createPlayList(CreatePlaylistRequest $request)
     {
-        // $playlistName = $request->input('playlist_name');
+        $validated = $request->validated();
+
         $accessToken = $request->session()->get('access_token');
         // $this->spotifyService->createPlayList($accessToken);
-        $this->spotifyService->retrieveTargetPlaylistItems($accessToken, $request->input('target_playlist_ids'));
+        $this->spotifyService->retrieveTargetPlaylistItems($accessToken, $validated['target_playlist_ids']);
         $this->spotifyService->retrieveCurrentPlayList($accessToken);
+
         // 作成されたプレイリストのIDを取得
         // プレイリストから曲を取得
         $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
