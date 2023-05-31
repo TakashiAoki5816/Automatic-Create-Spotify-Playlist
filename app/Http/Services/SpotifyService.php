@@ -56,32 +56,42 @@ class SpotifyService
         return $this->toDecodeJson($response);
     }
 
-    public function retrieveTargetPlaylistItems(string $accessToken, array $targetPlaylistIds)
+    /**
+     * 指定のプレイリストから全ての楽曲取得
+     *
+     * @param string $accessToken
+     * @param array $targetPlaylistIds
+     * @return void
+     */
+    public function retrieveTargetPlaylistAllTracks(string $accessToken, array $targetPlaylistIds)
     {
-        $addAllItems = [];
-        // 対象プレイリストのループ
-        collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
-            // １回目のリクエスト
+        $allTrackIds = collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+            // １回目のリクエスト （一度のリクエストで取得できる楽曲は100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
-            // ループ回数　 = 全アイテム数　÷　一度のリクエストで取得できる最大アイテム数 (余りは切り上げ)
+            // ループ回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数)
             $loopCount = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
 
             // プレイリスト内にあるアイテムのループ（100曲分）
-            $trackIds = collect($playlistData->tracks->items)->map(function ($item) {
+            $playlistTrackIds = collect($playlistData->tracks->items)->map(function ($item) {
                 // 大元にトラックIDを追加
                 return $item->track->id;
             })->toArray();
 
             // ２回目以降の必要なリクエスト回数分ループ
             for ($i = 2; $i <= $loopCount; $i++) {
+                // TODO ループさせる方法 nextまたはクエリパラメータで上手くループさせる方法を導き出す
                 $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $playlistData->tracks->next);
                 $playlistData = $this->toDecodeJson($response);
-                collect($playlistData->tracks->items)->each(function ($item) use ($trackIds) {
-                    $trackIds += $item->track->id;
+                $trackIds = collect($playlistData->items)->each(function ($item) {
+                    return $item->track->id;
                 });
+
+                array_push($playlistTrackIds, $trackIds);
             }
+
+            return $playlistTrackIds;
         });
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\AuthorizeException;
 use App\Http\Requests\AccessTokenRequest;
 use App\Http\Requests\AuthorizeRequest;
+use App\Http\Requests\CreatePlaylistRequest;
 use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
 use Spotify;
-use App\Http\Requests\CreatePlaylistRequest;
 
 class SpotifyController extends Controller
 {
@@ -101,10 +101,13 @@ class SpotifyController extends Controller
     public function createPlayList(CreatePlaylistRequest $request)
     {
         $validated = $request->validated();
-
         $accessToken = $request->session()->get('access_token');
+
+        // 新規プレイリスト作成
         // $this->spotifyService->createPlayList($accessToken);
-        $this->spotifyService->retrieveTargetPlaylistItems($accessToken, $validated['target_playlist_ids']);
+
+        // 指定プレイリストから全ての楽曲を取得
+        $this->spotifyService->retrieveTargetPlaylistAllTracks($accessToken, $validated['target_playlist_ids']);
         $this->spotifyService->retrieveCurrentPlayList($accessToken);
 
         // 作成されたプレイリストのIDを取得
