@@ -23,31 +23,40 @@ class SpotifyService
     /**
      * プレイリスト作成
      *
+     * @param string $accessToken
+     * @param string $playlistName フォームから送られてきたプレイリスト名
      * @return GuzzleResponse
      */
-    public function createPlayList($accessToken): GuzzleResponse
+    public function createPlayList(string $accessToken, string $playlistName): GuzzleResponse
     {
+        // ユーザーID取得
         $userId = $this->retrieveUserId($accessToken);
+
         $formData = [
-            "name" => "Laravelテストプレイリストdemo作成",
-            "description" => "Laravelテストプレイリスト description",
-            "public" => true,
+            "name" => $playlistName,
+            "public" => true, // TODO ゆくゆくはpublic, private選べるようにする
         ];
 
         return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
     }
 
-    public function toDecodeJson($response)
-    {
-        return json_decode($response->getBody()->getContents());
-    }
-
+    /**
+     * ユーザーID取得
+     *
+     * @param string $accessToken
+     * @return string ユーザーID
+     */
     public function retrieveUserId(string $accessToken): string
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
         $content = $this->toDecodeJson($response);
 
         return $content->id;
+    }
+
+    public function toDecodeJson($response)
+    {
+        return json_decode($response->getBody()->getContents());
     }
 
     public function retrieveMyPlayList(string $accessToken)

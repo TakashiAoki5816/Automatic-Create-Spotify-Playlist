@@ -12,7 +12,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
-use Spotify;
 
 class SpotifyController extends Controller
 {
@@ -26,7 +25,7 @@ class SpotifyController extends Controller
     /**
      * SpotifyController Constructor
      *
-     * @param Spotify $spotify
+     * @param SpotifyService $spotifyService
      * @param GuzzleService $guzzleService
      */
     public function __construct(
@@ -50,6 +49,8 @@ class SpotifyController extends Controller
             $authorizeEntity = $request->toEntity();
             $authorizeUrl = $authorizeEntity->retrieveRequestUrl();
         } catch (AuthorizeException $e) {
+            Log::error('authorization@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             throw $e;
         }
 
@@ -63,7 +64,7 @@ class SpotifyController extends Controller
      * @throws CanNotGetAccessTokenException $e
      * @return RedirectResponse
      */
-    public function getAccessToken(AccessTokenRequest $request): RedirectResponse
+    public function accessToken(AccessTokenRequest $request): RedirectResponse
     {
         try {
             $accessTokenEntity = $request->toEntity();
@@ -72,6 +73,8 @@ class SpotifyController extends Controller
             $response = $this->guzzleService->requestWithBody($url, $body);
             $request->storeAccessTokenToSession(json_decode($response->getBody()));
         } catch (CanNotGetAccessTokenException $e) {
+            Log::error('accessToken@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             throw $e;
         }
 
@@ -79,10 +82,10 @@ class SpotifyController extends Controller
     }
 
     /**
-     * 自身のプレイリストを取得する
+     * ユーザー自身のプレイリストを取得する
      *
      * @param Request $request
-     * @return void
+     * @return JsonResponse
      */
     public function retrieveMyPlaylist(Request $request): JsonResponse
     {
@@ -104,7 +107,7 @@ class SpotifyController extends Controller
         $accessToken = $request->session()->get('access_token');
 
         // 新規プレイリスト作成
-        // $this->spotifyService->createPlayList($accessToken);
+        $this->spotifyService->createPlayList($accessToken, $validated['playlist_name']);
 
         // 指定プレイリストから全ての楽曲を取得
         $this->spotifyService->retrieveTargetPlaylistAllTracks($accessToken, $validated['target_playlist_ids']);

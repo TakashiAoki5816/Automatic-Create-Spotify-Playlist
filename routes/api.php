@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,9 +13,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['api'])->prefix('spotify')->group(function () {
-    Route::get('/authorization', ['App\Http\Controllers\SpotifyController'::class, 'authorization'])->name('authorizeUrl');
-    Route::get('/callback', ['App\Http\Controllers\SpotifyController'::class, 'getAccessToken'])->name('getAccessToken');
+Route::middleware(['api'])->prefix('spotify')->name('spotify.')->group(function () {
+    Route::get('/authorization', ['App\Http\Controllers\SpotifyController'::class, 'authorization'])->name('authorization');
+    Route::get('/callback', ['App\Http\Controllers\SpotifyController'::class, 'accessToken'])->name('accessToken');
     Route::get('/myPlaylist', ['App\Http\Controllers\SpotifyController'::class, 'retrieveMyPlaylist'])->name('retrieveMyPlaylist');
     Route::post('/createPlaylist', ['App\Http\Controllers\SpotifyController'::class, 'createPlaylist'])->name('createPlaylist');
 });
