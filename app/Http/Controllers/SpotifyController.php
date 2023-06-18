@@ -106,11 +106,11 @@ class SpotifyController extends Controller
         $validated = $request->validated();
         $accessToken = $request->session()->get('access_token');
 
-        // 新規プレイリスト作成
+        // 新規 空プレイリスト作成
         $this->spotifyService->createPlayList($accessToken, $validated['playlist_name']);
 
-        // 指定プレイリストから全ての楽曲を取得
-        $this->spotifyService->retrieveTargetPlaylistAllTracks($accessToken, $validated['target_playlist_ids']);
+        // 指定プレイリスト内にある全ての楽曲IDを取得
+        $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
         $this->spotifyService->retrieveCurrentPlayList($accessToken);
 
         // 作成されたプレイリストのIDを取得

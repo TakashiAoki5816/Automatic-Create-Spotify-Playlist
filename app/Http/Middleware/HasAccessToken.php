@@ -17,18 +17,18 @@ class HasAccessToken
      */
     public function handle(Request $request, Closure $next): \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
     {
-        // セッション格納チェック
+        // アクセストークン 存在チェック
         if (empty($request->session()->get('access_token'))) {
             // 認証ルーティングにリダイレクト
             return redirect()->route('spotify.authorization');
         }
 
         $carbonExpiresIn = new CarbonImmutable($request->session()->get('expires_in'));
-        // 期限切れチェック
+        // アクセストークン 期限切れチェック
         if ($carbonExpiresIn->isPast()) {
-            // リフレッシュトークンをアクセストークンとしてセッションに格納する
+            // リフレッシュトークンをアクセストークンとしてセッションに格納する（現状リフレッシュトークンを使用しても上手くいってなさそう）
+            $request->session()->put('access_token', $request->session()->get('refresh_token'));
             // TODO リフレッシュトークンも期限切れた場合
-            $this->session()->put('access_token', $request->session()->get('refresh_token'));
         }
 
         return $next($request);

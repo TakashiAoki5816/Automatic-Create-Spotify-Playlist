@@ -2,8 +2,9 @@
 
 namespace App\Http\Services;
 
-use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use App\Http\Services\GuzzleService;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use stdClass;
 
 class SpotifyService
 {
@@ -66,42 +67,42 @@ class SpotifyService
     }
 
     /**
-     * 指定のプレイリストから全ての楽曲取得
+     * 指定プレイリスト内にある全ての楽曲ID取得
      *
      * @param string $accessToken
      * @param array $targetPlaylistIds
-     * @return void
+     * @return array<string> $trackIds 指定プレイリスト内にある全ての楽曲ID
      */
-    public function retrieveTargetPlaylistAllTracks(string $accessToken, array $targetPlaylistIds)
+    public function retrieveTargetPlaylistAllTrackIds(string $accessToken, array $targetPlaylistIds): array
     {
-        $allTrackIds = collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+        return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
             // １回目のリクエスト （一度のリクエストで取得できる楽曲は100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
-            // ループ回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数)
-            $loopCount = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
-
-            // プレイリスト内にあるアイテムのループ（100曲分）
-            $playlistTrackIds = collect($playlistData->tracks->items)->map(function ($item) {
-                // 大元にトラックIDを追加
+            // 1回目のリクエストで取得した最大100曲分の楽曲IDを格納
+            $playlistTrackIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
                 return $item->track->id;
             })->toArray();
 
-            // ２回目以降の必要なリクエスト回数分ループ
-            for ($i = 2; $i <= $loopCount; $i++) {
-                // TODO ループさせる方法 nextまたはクエリパラメータで上手くループさせる方法を導き出す
-                $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $playlistData->tracks->next);
-                $playlistData = $this->toDecodeJson($response);
-                $trackIds = collect($playlistData->items)->each(function ($item) {
-                    return $item->track->id;
-                });
+            // 必要なリクエスト回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数) 切り上げ
+            $count = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
 
-                array_push($playlistTrackIds, $trackIds);
+            // ２回目以降の必要なリクエスト回数分ループ
+            for ($i = 2; $i <= $count; $i++) {
+                $url = $i == 2 ? $playlistData->tracks->next : $playlistData->next;
+
+                $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $url);
+                $playlistData = $this->toDecodeJson($response);
+                $trackIds = collect($playlistData->items)->map(function (stdClass $item) {
+                    return $item->track->id;
+                })->toArray();
+
+                $playlistTrackIds = array_merge($playlistTrackIds, $trackIds);
             }
 
             return $playlistTrackIds;
-        });
+        })->flatten()->toArray();
     }
 
     public function retrievePlaylistById($accessToken, $playlistId)
