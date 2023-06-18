@@ -8,8 +8,8 @@ use App\Values\ClientSecret;
 use App\Values\Code;
 use App\Values\GrantType;
 use App\Values\RedirectUrl;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
-use Psr\Http\Message\ResponseInterface;
 use stdClass;
 
 class AccessTokenRequest extends FormRequest
@@ -44,7 +44,13 @@ class AccessTokenRequest extends FormRequest
      */
     public function storeAccessTokenToSession(stdClass $stdClass): void
     {
-        $this->session()->put('access_token', $stdClass->access_token);
+        $carbonCurrentTime = CarbonImmutable::now();
+        // 期限切れ時刻
+        $expiresIn = $carbonCurrentTime->addSeconds($stdClass->expires_in)->format('Y-m-d H:i:s');
+
+        $this->session()->put('access_token', $stdClass->access_token); // アクセストークン
+        $this->session()->put('expires_in', $expiresIn); // アクセストークン 期限切れ
+        $this->session()->put('refresh_token', $stdClass->refresh_token); // リフレッシュトークン
     }
 
     /**

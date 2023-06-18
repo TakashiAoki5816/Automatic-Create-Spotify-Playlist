@@ -2,8 +2,9 @@
 
 namespace App\Http\Services;
 
-use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use App\Http\Services\GuzzleService;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use stdClass;
 
 class SpotifyService
 {
@@ -23,25 +24,29 @@ class SpotifyService
     /**
      * プレイリスト作成
      *
+     * @param string $accessToken
+     * @param string $playlistName フォームから送られてきたプレイリスト名
      * @return GuzzleResponse
      */
-    public function createPlayList($accessToken): GuzzleResponse
+    public function createPlayList(string $accessToken, string $playlistName): GuzzleResponse
     {
+        // ユーザーID取得
         $userId = $this->retrieveUserId($accessToken);
+
         $formData = [
-            "name" => "Laravelテストプレイリストdemo作成",
-            "description" => "Laravelテストプレイリスト description",
-            "public" => true,
+            "name" => $playlistName,
+            "public" => true, // TODO ゆくゆくはpublic, private選べるようにする
         ];
 
         return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
     }
 
-    public function toDecodeJson($response)
-    {
-        return json_decode($response->getBody()->getContents());
-    }
-
+    /**
+     * ユーザーID取得
+     *
+     * @param string $accessToken
+     * @return string ユーザーID
+     */
     public function retrieveUserId(string $accessToken): string
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
@@ -50,39 +55,54 @@ class SpotifyService
         return $content->id;
     }
 
+    public function toDecodeJson($response)
+    {
+        return json_decode($response->getBody()->getContents());
+    }
+
     public function retrieveMyPlayList(string $accessToken)
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me/playlists");
         return $this->toDecodeJson($response);
     }
 
-    public function retrieveTargetPlaylistItems(string $accessToken, array $targetPlaylistIds)
+    /**
+     * 指定プレイリスト内にある全ての楽曲ID取得
+     *
+     * @param string $accessToken
+     * @param array $targetPlaylistIds
+     * @return array<string> $trackIds 指定プレイリスト内にある全ての楽曲ID
+     */
+    public function retrieveTargetPlaylistAllTrackIds(string $accessToken, array $targetPlaylistIds): array
     {
-        $addAllItems = [];
-        // 対象プレイリストのループ
-        collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
-            // １回目のリクエスト
+        return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+            // １回目のリクエスト （一度のリクエストで取得できる楽曲は100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
-            // ループ回数　 = 全アイテム数　÷　一度のリクエストで取得できる最大アイテム数 (余りは切り上げ)
-            $loopCount = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
-
-            // プレイリスト内にあるアイテムのループ（100曲分）
-            $trackIds = collect($playlistData->tracks->items)->map(function ($item) {
-                // 大元にトラックIDを追加
+            // 1回目のリクエストで取得した最大100曲分の楽曲IDを格納
+            $playlistTrackIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
                 return $item->track->id;
             })->toArray();
 
+            // 必要なリクエスト回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数) 切り上げ
+            $count = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
+
             // ２回目以降の必要なリクエスト回数分ループ
-            for ($i = 2; $i <= $loopCount; $i++) {
-                $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $playlistData->tracks->next);
+            for ($i = 2; $i <= $count; $i++) {
+                $url = $i == 2 ? $playlistData->tracks->next : $playlistData->next;
+
+                $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $url);
                 $playlistData = $this->toDecodeJson($response);
-                collect($playlistData->tracks->items)->each(function ($item) use ($trackIds) {
-                    $trackIds += $item->track->id;
-                });
+                $trackIds = collect($playlistData->items)->map(function (stdClass $item) {
+                    return $item->track->id;
+                })->toArray();
+
+                $playlistTrackIds = array_merge($playlistTrackIds, $trackIds);
             }
-        });
+
+            return $playlistTrackIds;
+        })->flatten()->toArray();
     }
 
     public function retrievePlaylistById($accessToken, $playlistId)
