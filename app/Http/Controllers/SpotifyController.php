@@ -96,7 +96,7 @@ class SpotifyController extends Controller
     }
 
     /**
-     * オリジナルのプレイリストを作成
+     * 対象のプレイリストから指定したジャンルだけを抽出したプレイリストを作成
      *
      * @param CreatePlaylistRequest $request
      * @return
@@ -107,22 +107,17 @@ class SpotifyController extends Controller
         $accessToken = $request->session()->get('access_token');
 
         // 新規 空プレイリスト作成
-        $this->spotifyService->createPlayList($accessToken, $validated['playlist_name']);
+        $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
+        $content = json_decode($response->getBody());
 
         // 指定プレイリスト内にある全ての楽曲IDを取得
         $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
-        $this->spotifyService->retrieveCurrentPlayList($accessToken);
 
-        // 作成されたプレイリストのIDを取得
-        // プレイリストから曲を取得
-        $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
         // ArtistDataからじゃないとジャンルを取得することができない
         // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
         // $response3 = $this->spotifyService->fetchArtistData($accessToken);
 
-        $content = json_decode($response->getBody());
-        $trackIds = $this->spotifyService->retrieveTrackIds($content->items);
-        // $response = $this->spotifyService->addItemToPlaylist($accessToken, $trackIds);
+        $response = $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $trackIds);
         return response()->json($response);
     }
 }

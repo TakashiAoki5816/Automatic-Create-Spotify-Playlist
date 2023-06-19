@@ -22,13 +22,13 @@ class SpotifyService
     }
 
     /**
-     * プレイリスト作成
+     * 新規 空プレイリスト作成
      *
      * @param string $accessToken
      * @param string $playlistName フォームから送られてきたプレイリスト名
      * @return GuzzleResponse
      */
-    public function createPlayList(string $accessToken, string $playlistName): GuzzleResponse
+    public function createNewPlayList(string $accessToken, string $playlistName): GuzzleResponse
     {
         // ユーザーID取得
         $userId = $this->retrieveUserId($accessToken);
@@ -42,7 +42,7 @@ class SpotifyService
     }
 
     /**
-     * ユーザーID取得
+     * ユーザーID 取得
      *
      * @param string $accessToken
      * @return string ユーザーID
@@ -105,30 +105,22 @@ class SpotifyService
         })->flatten()->toArray();
     }
 
-    public function retrievePlaylistById($accessToken, $playlistId)
-    {
-    }
-
-    public function fetchItemsFromPlaylist(string $accessToken): GuzzleResponse
-    {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/1lCObPysmM50HzRZcpErJv/tracks?offset=100");
-    }
-
     public function fetchArtistData(string $accessToken): GuzzleResponse
     {
         return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
-    public function retrieveTrackIds($tracks)
+    /**
+     * 作成したプレイリストに楽曲を追加
+     *
+     * @param string $accessToken
+     * @param string $playlistId 作成したプレイリストID
+     * @param array $trackIds 追加する楽曲IDs
+     * @return GuzzleResponse
+     */
+    public function addTracksToNewPlaylist(string $accessToken, string $playlistId, $trackIds): GuzzleResponse
     {
-        return collect($tracks)->map(function ($trackInfo) {
-            return $trackInfo->track->id;
-        })->toArray();
-    }
-
-    public function addItemToPlaylist(string $accessToken, $trackIds): GuzzleResponse
-    {
-        $trackUrisArr = collect($trackIds)->map(function ($trackId) {
+        $trackUrisArr = collect($trackIds)->map(function (string $trackId) {
             return 'spotify:track:' . $trackId;
         })->toArray();
 
@@ -136,6 +128,9 @@ class SpotifyService
             "uris" => $trackUrisArr,
             "position" => 0,
         ];
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/5Lon8tamI9cexEHouArVIM/tracks", $formData);
+
+        // 一度のリクエストで最大100曲まで追加できる
+        // TODO：何回りクエストする必要があるのかを計算
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/{$playlistId}/tracks", $formData);
     }
 }
