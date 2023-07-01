@@ -4,6 +4,7 @@ namespace App\Http\Services;
 
 use App\Http\Services\GuzzleService;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use Illuminate\Support\Collection;
 use stdClass;
 
 class SpotifyService
@@ -67,21 +68,22 @@ class SpotifyService
     }
 
     /**
-     * 指定プレイリスト内にある全ての楽曲ID取得
+     * 指定プレイリスト内にある全てのトラックID取得
      *
      * @param string $accessToken
      * @param array $targetPlaylistIds
-     * @return array<string> $trackIds 指定プレイリスト内にある全ての楽曲ID
+     * @return array<string> $trackIds 指定プレイリスト内にある全てのトラックID
      */
     public function retrieveTargetPlaylistAllTrackIds(string $accessToken, array $targetPlaylistIds): array
     {
         return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
-            // １回目のリクエスト （一度のリクエストで取得できる楽曲は100曲まで）
+            // １回目のリクエスト （一度のリクエストで取得できるトラックは100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
-            // 1回目のリクエストで取得した最大100曲分の楽曲IDを格納
+            // 1回目のリクエストで取得した最大100曲分のトラックIDを格納
             $playlistTrackIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
+                // TODO アーティストIDもここで格納する必要あり
                 return $item->track->id;
             })->toArray();
 
@@ -105,32 +107,32 @@ class SpotifyService
         })->flatten()->toArray();
     }
 
-    public function fetchArtistData(string $accessToken): GuzzleResponse
+    public function fetchArtistData(string $accessToken, array $trackIds)
     {
-        return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
+        // return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
     /**
-     * 作成したプレイリストに楽曲を追加
+     * 作成したプレイリストにトラックを追加
      *
      * @param string $accessToken
      * @param string $playlistId 作成したプレイリストID
-     * @param array $trackIds 追加する楽曲IDs
+     * @param array $trackIds 追加するトラックIDs
      * @return GuzzleResponse
      */
-    public function addTracksToNewPlaylist(string $accessToken, string $playlistId, $trackIds): GuzzleResponse
+    public function addTracksToNewPlaylist(string $accessToken, string $playlistId, array $trackIds)
     {
-        $trackUrisArr = collect($trackIds)->map(function (string $trackId) {
+        // トラックURI形式にトラックIDを整形し、100曲単位に分割する(一度のリクエストで追加できるのは最大100曲までのため)
+        $trackUrisChunksCollection = collect($trackIds)->map(function (string $trackId) {
             return 'spotify:track:' . $trackId;
-        })->toArray();
+        })->chunk(100);
 
-        $formData = [
-            "uris" => $trackUrisArr,
-            "position" => 0,
-        ];
+        $trackUrisChunksCollection->each(function (Collection $trackUris) use ($accessToken, $playlistId) {
+            $formData = [
+                "uris" => $trackUris,
+            ];
 
-        // 一度のリクエストで最大100曲まで追加できる
-        // TODO：何回りクエストする必要があるのかを計算
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/{$playlistId}/tracks", $formData);
+            $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/{$playlistId}/tracks", $formData);
+        });
     }
 }
