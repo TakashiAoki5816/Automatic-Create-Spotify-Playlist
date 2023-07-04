@@ -8,10 +8,12 @@ use App\Http\Requests\AuthorizeRequest;
 use App\Http\Requests\CreatePlaylistRequest;
 use App\Http\Services\GuzzleService;
 use App\Http\Services\SpotifyService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Log;
 
 class SpotifyController extends Controller
 {
@@ -96,7 +98,7 @@ class SpotifyController extends Controller
     }
 
     /**
-     * オリジナルのプレイリストを作成
+     * 対象のプレイリストから指定したジャンルだけを抽出したプレイリストを作成
      *
      * @param CreatePlaylistRequest $request
      * @return
@@ -106,23 +108,28 @@ class SpotifyController extends Controller
         $validated = $request->validated();
         $accessToken = $request->session()->get('access_token');
 
-        // 新規 空プレイリスト作成
-        $this->spotifyService->createPlayList($accessToken, $validated['playlist_name']);
+        try {
+            // 新規 空プレイリスト作成
+            $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
+            $content = json_decode($response->getBody());
 
-        // 指定プレイリスト内にある全ての楽曲IDを取得
-        $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
-        $this->spotifyService->retrieveCurrentPlayList($accessToken);
+            // 指定プレイリスト内にある全てのトラックIDを取得
+            $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
 
-        // 作成されたプレイリストのIDを取得
-        // プレイリストから曲を取得
-        $response = $this->spotifyService->fetchItemsFromPlaylist($accessToken);
-        // ArtistDataからじゃないとジャンルを取得することができない
-        // genresから何もJ-POP, K-POP, 洋楽とするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
-        // $response3 = $this->spotifyService->fetchArtistData($accessToken);
+            // ArtistDataからじゃないとジャンルを取得することができない
+            // genresから何をJ-POP, K-POP, 洋楽の括りとするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
+            // どんなジャンルがあるのか調査する必要あり
+            // $response3 = $this->spotifyService->fetchArtistData($accessToken, $trackIds);
 
-        $content = json_decode($response->getBody());
-        $trackIds = $this->spotifyService->retrieveTrackIds($content->items);
-        // $response = $this->spotifyService->addItemToPlaylist($accessToken, $trackIds);
-        return response()->json($response);
+            $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $trackIds);
+        } catch (Exception $e) {
+            Log::error('createPlayList@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            throw $e;
+        }
+
+        return response()->json([
+            'status' => 200,
+        ]);
     }
 }
