@@ -113,7 +113,7 @@ class SpotifyController extends Controller
             $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
             $content = json_decode($response->getBody());
 
-            // 指定プレイリスト内にある全ての楽曲IDを取得
+            // 指定プレイリスト内にある全てのトラックIDを取得
             $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
 
             // ArtistDataからじゃないとジャンルを取得することができない

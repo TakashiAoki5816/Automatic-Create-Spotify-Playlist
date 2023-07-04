@@ -127,9 +127,10 @@ class SpotifyService
             return 'spotify:track:' . $trackId;
         })->chunk(100);
 
+        // 100曲ずつトラックを追加する
         $trackUrisChunksCollection->each(function (Collection $trackUris) use ($accessToken, $playlistId) {
             $formData = [
-                "uris" => $trackUris,
+                "uris" => $trackUris->values(), // valuesでindexを0から振り直し
             ];
 
             $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/{$playlistId}/tracks", $formData);
