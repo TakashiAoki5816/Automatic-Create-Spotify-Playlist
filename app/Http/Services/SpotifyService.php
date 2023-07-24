@@ -74,17 +74,19 @@ class SpotifyService
      * @param array $targetPlaylistIds
      * @return array<string> $trackIds 指定プレイリスト内にある全てのトラックID
      */
-    public function retrieveTargetPlaylistAllTrackIds(string $accessToken, array $targetPlaylistIds): array
+    public function retrieveTargetPlaylistAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): array
     {
-        return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+        $allPlaylistTrackIdAndArtistIds = collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
             // １回目のリクエスト （一度のリクエストで取得できるトラックは100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
-            // 1回目のリクエストで取得した最大100曲分のトラックIDを格納
-            $playlistTrackIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
-                // TODO アーティストIDもここで格納する必要あり
-                return $item->track->id;
+            // 1回目のリクエストで取得した最大100曲分のトラックID/アーティストIDを格納
+            $playlistTrackIdAndArtistIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
+                return [
+                    'track_id' => $item->track->id,
+                    'artist_id' => $item->track->artists[0]->id,
+                ];
             })->toArray();
 
             // 必要なリクエスト回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数) 切り上げ
@@ -92,23 +94,28 @@ class SpotifyService
 
             // ２回目以降の必要なリクエスト回数分ループ
             for ($i = 2; $i <= $count; $i++) {
-                $url = $i == 2 ? $playlistData->tracks->next : $playlistData->next;
+                $url = ($i == 2) ? $playlistData->tracks->next : $playlistData->next;
 
                 $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $url);
                 $playlistData = $this->toDecodeJson($response);
-                $trackIds = collect($playlistData->items)->map(function (stdClass $item) {
-                    return $item->track->id;
+                $trackIdAndPlaylistIds = collect($playlistData->items)->map(function (stdClass $item) {
+                    return [
+                        'track_id' => $item->track->id,
+                        'artist_id' => $item->track->artists[0]->id,
+                    ];
                 })->toArray();
 
-                $playlistTrackIds = array_merge($playlistTrackIds, $trackIds);
+                // リファクタしたい、もし必要であればデータフローを書く
+                $playlistTrackIdAndArtistIds = array_merge($playlistTrackIdAndArtistIds, $trackIdAndPlaylistIds);
             }
 
-            return $playlistTrackIds;
-        })->flatten()->toArray();
+            return $playlistTrackIdAndArtistIds;
+        });
     }
 
     public function fetchArtistData(string $accessToken, array $trackIds)
     {
+        // TODO どこかで使う　flatten()
         // return $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/3Nrfpe0tUJi4K4DXYWgMUX");
     }
 
@@ -130,7 +137,7 @@ class SpotifyService
         // 100曲ずつトラックを追加する
         $trackUrisChunksCollection->each(function (Collection $trackUris) use ($accessToken, $playlistId) {
             $formData = [
-                "uris" => $trackUris->values(), // valuesでindexを0から振り直し
+                "uris" => $trackUris->values(), // valuesでindexを0から振り直し、0からじゃないとリクエスト失敗する
             ];
 
             $this->guzzleService->requestToSpotify($accessToken, "POST", "/playlists/{$playlistId}/tracks", $formData);
