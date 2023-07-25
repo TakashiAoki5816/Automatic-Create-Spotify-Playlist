@@ -74,20 +74,23 @@ class SpotifyService
      * @param array $targetPlaylistIds
      * @return array<string> $trackIds 指定プレイリスト内にある全てのトラックID
      */
-    public function retrieveTargetPlaylistAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): array
+    public function retrieveAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds): array
     {
-        $allPlaylistTrackIdAndArtistIds = collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+        $aaa = collect([]);
+        $allPlaylistTrackIdAndArtistIdsCollection = collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
             // １回目のリクエスト （一度のリクエストで取得できるトラックは100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
             // 1回目のリクエストで取得した最大100曲分のトラックID/アーティストIDを格納
-            $playlistTrackIdAndArtistIds = collect($playlistData->tracks->items)->map(function (stdClass $item) {
+            $firstPlaylistTrackIdAndArtistIdsCollection = collect($playlistData->tracks->items)->map(function (stdClass $item) {
                 return [
                     'track_id' => $item->track->id,
                     'artist_id' => $item->track->artists[0]->id,
                 ];
-            })->toArray();
+            });
+
+            $playlistTrackIdAndArtistIdsCollection = $firstPlaylistTrackIdAndArtistIdsCollection;
 
             // 必要なリクエスト回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数) 切り上げ
             $count = ceil($playlistData->tracks->total / self::$maxItemsPerRequest);
@@ -98,19 +101,22 @@ class SpotifyService
 
                 $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $url);
                 $playlistData = $this->toDecodeJson($response);
-                $trackIdAndPlaylistIds = collect($playlistData->items)->map(function (stdClass $item) {
+                $trackIdAndPlaylistIdsCollection = collect($playlistData->items)->map(function (stdClass $item) {
                     return [
                         'track_id' => $item->track->id,
                         'artist_id' => $item->track->artists[0]->id,
                     ];
-                })->toArray();
+                });
 
-                // リファクタしたい、もし必要であればデータフローを書く
-                $playlistTrackIdAndArtistIds = array_merge($playlistTrackIdAndArtistIds, $trackIdAndPlaylistIds);
+                $playlistTrackIdAndArtistIdsCollection = $playlistTrackIdAndArtistIdsCollection->merge($trackIdAndPlaylistIdsCollection);
             }
 
-            return $playlistTrackIdAndArtistIds;
+            return $playlistTrackIdAndArtistIdsCollection;
         });
+
+        return $allPlaylistTrackIdAndArtistIdsCollection->reduce(function ($carry, $item) {
+            return $carry->mergeRecursive($item);
+        }, collect());
     }
 
     public function fetchArtistData(string $accessToken, array $trackIds)
