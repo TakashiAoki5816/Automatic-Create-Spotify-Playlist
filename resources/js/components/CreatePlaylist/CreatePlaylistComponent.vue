@@ -19,7 +19,7 @@ interface Playlists {
 //     images: [],
 // });
 
-const playlists = ref([]);
+const playlists: any = ref([]);
 
 const formData: FormData = reactive({
     'target_playlist_ids': [],
@@ -112,3 +112,4 @@ img {
     max-width: none;
 }
 </style>
+./@types/index
