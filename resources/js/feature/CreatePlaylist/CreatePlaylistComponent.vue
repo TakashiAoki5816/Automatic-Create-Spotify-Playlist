@@ -1,7 +1,7 @@
 <script setup lang='ts'>
 import { ref, reactive, onMounted } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import { Playlists, FormData } from './@types/index';
+import { FormData } from './@types/index';
 
 interface Playlists {
     id: number | null,
