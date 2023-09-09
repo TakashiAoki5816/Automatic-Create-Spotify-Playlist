@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { FormData } from './@types/index';
-// import GenreCategory from '../GenreCategory/GenreCategory.vue';
+import GenreCategory from '../../components/modules/GenreCategory/GenreCategory.vue';
 
 interface Playlists {
     id: number | null,
@@ -77,7 +77,7 @@ onMounted(() => {
                 input-class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                 v-model="formData.playlist_name"
             />
-            <!-- <GenreCategory></GenreCategory> -->
+            <GenreCategory />
         </FormKit>
     </div>
 </template>

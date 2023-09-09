@@ -1,6 +1,6 @@
 <script setup lang='ts'>
 import { reactive } from 'vue';
-import { useGenreCategoryStore } from '../../store/GenreCategoryStore';
+import { useGenreCategoryStore } from '../../../store/GenreCategoryStore';
 
 const genreCategoryStore = useGenreCategoryStore();
 
