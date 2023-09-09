@@ -2,7 +2,8 @@ import './bootstrap';
 import '../css/app.css'
 
 import { createApp } from "vue/dist/vue.esm-bundler";
-import CreatePlaylistComponent from './feature/CreatePlaylist/CreatePlaylistComponent.vue';
+import CreatePlaylist from './feature/CreatePlaylist/CreatePlaylist.vue';
+import GenreCategory from './feature/GenreCategory/GenreCategory.vue';
 import { plugin, defaultConfig } from '@formkit/vue'
 import { createPinia } from "pinia";
 
@@ -10,7 +11,8 @@ const pinia = createPinia();
 
 const createPlaylistApp = createApp({
     components: {
-        'create-playlist-component': CreatePlaylistComponent,
+        'create-playlist': CreatePlaylist,
+        'genre-category': GenreCategory,
     }
 });
 createPlaylistApp.use(plugin, defaultConfig);

@@ -21,7 +21,7 @@
 
 <body class="antialiased">
     <div id="app">
-        <create-playlist-component></create-playlist-component>
+        <create-playlist></create-playlist>
     </div>
 </body>
 
