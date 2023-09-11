@@ -3,6 +3,7 @@ import { ref, reactive, onMounted } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { FormData } from './@types/index';
 import GenreCategory from '../../components/modules/GenreCategory/GenreCategory.vue';
+import TextInput from '../../components/forms/formkit/TextInput.vue';
 
 interface Playlists {
     id: number | null,
@@ -68,13 +69,10 @@ onMounted(() => {
                     <img :src="playlist.images[1]?.url" :height="playlist.images[1]?.height" :width="playlist.images[1]?.width">
                 </li>
             </ul>
-            <FormKit
-                type="text"
+            <TextInput
                 label="プレイリスト名"
                 name="playlist_name"
                 validation="required"
-                label-class="block mt-20 mb-2 text-sm text-gray-900 dark:text-white"
-                input-class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                 v-model="formData.playlist_name"
             />
             <GenreCategory />
