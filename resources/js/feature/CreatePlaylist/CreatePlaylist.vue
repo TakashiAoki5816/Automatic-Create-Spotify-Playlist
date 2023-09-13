@@ -1,9 +1,10 @@
 <script setup lang='ts'>
-import { ref, reactive, onMounted } from 'vue';
+import { reactive } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { FormData } from './@types/index';
-import GenreCategory from '../../components/modules/GenreCategory/GenreCategory.vue';
+import MyPlaylist from '../../components/modules/MyPlaylist/MyPlaylist.vue';
 import TextInput from '../../components/forms/formkit/TextInput.vue';
+import GenreCategory from '../../components/modules/GenreCategory/GenreCategory.vue';
 
 interface Playlists {
     id: number | null,
@@ -15,26 +16,11 @@ interface Playlists {
     }[],
 }
 
-const playlists: any = ref([]);
-
 const formData: FormData = reactive({
     'target_playlist_ids': [],
     'playlist_name': '',
     'genres': [],
 });
-
-/**
- * マイプレイリストを取得
- * @return {void}
- */
-const retrieveMyPlaylist = async () => {
-    try {
-        const response: AxiosResponse = await axios.get('/api/spotify/myPlaylist');
-        playlists.value = response.data.items;
-    } catch (error) {
-        console.log(error);
-    }
-}
 
 const createPlaylist = (): void => {
     if (confirm('プレイリストを作成しますか？')) {
@@ -47,11 +33,6 @@ const createPlaylist = (): void => {
             });
     }
 }
-
-onMounted(() => {
-    console.log('mountedの中')
-    retrieveMyPlaylist();
-})
 </script>
 
 <template>
@@ -63,19 +44,18 @@ onMounted(() => {
             }"
             @submit="createPlaylist"
         >
-            <ul class="w-full flex flex-wrap">
-                <li v-for="(playlist, i) in playlists" :key="i" class="playlist-item">
-                    <input type="checkbox" name="target_playlist_ids" :value="playlist.id" v-model="formData.target_playlist_ids">{{ playlist.name}}
-                    <img :src="playlist.images[1]?.url" :height="playlist.images[1]?.height" :width="playlist.images[1]?.width">
-                </li>
-            </ul>
+            <MyPlaylist
+                v-model="formData.target_playlist_ids"
+            />
             <TextInput
                 label="プレイリスト名"
                 name="playlist_name"
                 validation="required"
                 v-model="formData.playlist_name"
             />
-            <GenreCategory />
+            <GenreCategory
+                v-model="formData.genres"
+            />
         </FormKit>
     </div>
 </template>
