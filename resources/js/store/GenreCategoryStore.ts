@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { getAll } from "../api/genreCategory";
 import { AxiosResponse } from "axios";
-import { GenreCategorySchema } from "../components/GenreCategory/@types/index";
+import { GenreCategorySchema } from "@/components/GenreCategory/@types/index";
 
 export type State = {
     all?: GenreCategorySchema[],

@@ -2,9 +2,9 @@
 import { reactive } from 'vue';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { FormData } from './@types/index';
-import MyPlaylist from '../../components/modules/MyPlaylist/MyPlaylist.vue';
-import TextInput from '../../components/forms/formkit/TextInput.vue';
-import GenreCategory from '../../components/modules/GenreCategory/GenreCategory.vue';
+import MyPlaylist from '@/components/modules/MyPlaylist/MyPlaylist.vue';
+import TextInput from '@/components/forms/formkit/TextInput.vue';
+import GenreCategory from '@/components/modules/GenreCategory/GenreCategory.vue';
 
 interface Playlists {
     id: number | null,
