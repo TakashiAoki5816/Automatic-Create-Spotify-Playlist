@@ -9,16 +9,16 @@ const playlists: any = ref([]);
  * @return {void}
  */
 const retrieveMyPlaylist = async () => {
-    try {
-        const response: AxiosResponse = await axios.get('/api/spotify/myPlaylist');
-        playlists.value = response.data.items;
-    } catch (error) {
-        console.log(error);
-    }
+    await axios.get('/api/spotify/myPlaylist')
+        .then(function (r: AxiosResponse) {
+            playlists.value = r.data.items;
+        })
+        .catch(function (e: AxiosError) {
+            console.log(e);
+        });
 }
 
 onMounted(() => {
-    console.log('Playlist mountedの中')
     retrieveMyPlaylist();
 })
 </script>
