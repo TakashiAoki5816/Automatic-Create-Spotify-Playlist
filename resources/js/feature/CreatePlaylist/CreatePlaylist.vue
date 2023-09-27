@@ -33,6 +33,10 @@ const createPlaylist = (): void => {
             });
     }
 }
+
+const targetPlaylistIds = (targetPlaylistIdsInput: Array<string>) => {
+    formData.target_playlist_ids = targetPlaylistIdsInput
+}
 </script>
 
 <template>
@@ -45,7 +49,7 @@ const createPlaylist = (): void => {
             @submit="createPlaylist"
         >
             <MyPlaylist
-                v-model="formData.target_playlist_ids"
+                @eventTargetPlaylistIds="targetPlaylistIds"
             />
             <TextInput
                 label="プレイリスト名"
