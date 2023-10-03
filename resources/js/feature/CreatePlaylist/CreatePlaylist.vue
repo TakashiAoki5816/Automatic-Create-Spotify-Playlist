@@ -49,7 +49,7 @@ const targetPlaylistIds = (targetPlaylistIdsInput: Array<string>) => {
             @submit="createPlaylist"
         >
             <MyPlaylist
-                @eventTargetPlaylistIds="targetPlaylistIds"
+                @eventCheckedPlaylistIds="targetPlaylistIds"
             />
             <TextInput
                 label="プレイリスト名"
