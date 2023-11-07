@@ -109,19 +109,19 @@ class SpotifyController extends Controller
         $accessToken = $request->session()->get('access_token');
 
         try {
+            // 指定プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクション取得
+            $allTrackIdAndArtistIdCollection = $this->spotifyService->getAllTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids']);
+
+            // TODO getAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
+            // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
+            $filteredAllTrackIdAndArtistIdCollection = $this->spotifyService->filteredTargetGenres($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
+
             // 新規 空プレイリスト作成
-            $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
-            $content = json_decode($response->getBody());
+            // $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
+            // $content = json_decode($response->getBody());
 
-            // 指定プレイリスト内にある全てのトラックIDを取得
-            $trackIds = $this->spotifyService->retrieveTargetPlaylistAllTrackIds($accessToken, $validated['target_playlist_ids']);
-
-            // ArtistDataからじゃないとジャンルを取得することができない
-            // genresから何をJ-POP, K-POP, 洋楽の括りとするか定める必要があるgenresテーブルを作成する　 etc. ONE OK ROCK j-pop, j-poprock, j-rock    Blueno Mars pop, dance pop    BTS k-pop, k-pop boy group
-            // どんなジャンルがあるのか調査する必要あり
-            // $response3 = $this->spotifyService->fetchArtistData($accessToken, $trackIds);
-
-            $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $trackIds);
+            // // 作成したプレイリストにトラック追加
+            // $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $allTrackIdAndArtistIdCollection);
         } catch (Exception $e) {
             Log::error('createPlayList@SpotifyController: ' . $e->getMessage());
             Log::error($e->getTraceAsString());

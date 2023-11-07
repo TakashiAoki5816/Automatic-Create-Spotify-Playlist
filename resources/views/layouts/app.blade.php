@@ -19,9 +19,9 @@
     @vite('resources/js/app.ts')
 </head>
 
-<body class="antialiased">
-    <div id="app">
-        <create-playlist-component></create-playlist-component>
+<body>
+    <div>
+        @yield('content')
     </div>
 </body>
 

@@ -18,4 +18,5 @@ Route::middleware(['api'])->prefix('spotify')->name('spotify.')->group(function 
     Route::get('/callback', ['App\Http\Controllers\SpotifyController'::class, 'accessToken'])->name('accessToken');
     Route::get('/myPlaylist', ['App\Http\Controllers\SpotifyController'::class, 'retrieveMyPlaylist'])->name('retrieveMyPlaylist');
     Route::post('/createPlaylist', ['App\Http\Controllers\SpotifyController'::class, 'createPlaylist'])->name('createPlaylist');
+    Route::get('/genre-categories', ['App\Http\Controllers\GenreCategoryController'::class, 'genreCategories'])->name('genreCategories');
 });

@@ -16,6 +16,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web'])->group(function () {
     Route::name('main.')->group(function () {
-        Route::get('/', ['App\Http\Controllers\MainController'::class, 'index'])->name('index')->middleware('access_token');
+        Route::get('/', ['App\Http\Controllers\HomeController'::class, 'index'])->name('index')->middleware('access_token');
     });
 });
