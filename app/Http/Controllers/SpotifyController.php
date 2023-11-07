@@ -113,6 +113,7 @@ class SpotifyController extends Controller
             $allTrackIdAndArtistIdCollection = $this->spotifyService->getAllTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids']);
 
             // TODO getAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
+            // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
             $filteredAllTrackIdAndArtistIdCollection = $this->spotifyService->filteredTargetGenres($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
 
             // 新規 空プレイリスト作成
