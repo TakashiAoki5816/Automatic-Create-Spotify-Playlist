@@ -109,12 +109,12 @@ class SpotifyController extends Controller
         $accessToken = $request->session()->get('access_token');
 
         try {
-            // 指定プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクション取得
+            // 指定プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクション
             $allTrackIdAndArtistIdCollection = $this->spotifyService->getAllTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids']);
 
             // TODO getAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
             // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
-            $filteredAllTrackIdAndArtistIdCollection = $this->spotifyService->filteredTargetGenres($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
+            $filteredAllTrackIdAndArtistIdCollection = $this->spotifyService->filteredTargetGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
 
             // 新規 空プレイリスト作成
             // $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);

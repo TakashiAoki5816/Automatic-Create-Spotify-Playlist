@@ -130,17 +130,22 @@ class SpotifyService
      * 指定されたジャンルで絞り込む
      *
      * @param string $accessToken
-     * @param array $targetGenres 指定されたジャンル
+     * @param string $selectedGenre 選択されたジャンル
      * @param Collection $allTrackIdAndArtistIdCollection
      * @return void
      */
-    public function filteredTargetGenres(string $accessToken, array $targetGenres, Collection $allTrackIdAndArtistIdCollection)
+    public function filteredTargetGenre(string $accessToken, string $selectedGenre, Collection $allTrackIdAndArtistIdCollection)
     {
-        $allTrackIdAndArtistIdCollection->filter(function (array $trackIdAndAccessTokenArray) use ($accessToken) {
-            $genres = $this->fetchGenresByArtistId($accessToken, $trackIdAndAccessTokenArray['artist_id']);
+        $allTrackIdAndArtistIdCollection->filter(function (array $trackIdAndAccessTokenArray) use ($accessToken, $selectedGenre) {
+            // アーティストに設定されているジャンルを取得
+            $artistGenres = $this->fetchGenresByArtistId($accessToken, $trackIdAndAccessTokenArray['artist_id']);
 
             // genresがない場合の制御
             // genresはあるけど、想定外のジャンル
+            // 選択されたジャンルなのかをフィルタリング
+            $bool = $this->checkContainSelectedGenre($selectedGenre, $artistGenres, $trackIdAndAccessTokenArray['track_id']);
+
+            return $bool;
         });
     }
 
@@ -149,7 +154,7 @@ class SpotifyService
      *
      * @param string $accessToken
      * @param string $artistId
-     * @return array
+     * @return array アーティストに設定されているジャンル
      */
     public function fetchGenresByArtistId(string $accessToken, string $artistId): array
     {
@@ -157,6 +162,21 @@ class SpotifyService
         $content = $this->toDecodeJson($response);
 
         return $content->genres;
+    }
+
+    /**
+     * 選択されたジャンルが含まれているか確認
+     *
+     * @param string $selectedGenre 選択されたジャンル
+     * @param string $artistGenres アーティストに設定されているジャンル
+     * @param string $trackId
+     * @return bool
+     */
+    public function checkContainSelectedGenre(string $selectedGenre, array $artistGenres, string $trackId): bool
+    {
+        // アーティストに設定されているジャンルが選択されたジャンルに含まれているか
+        collect($artistGenres)->map(function ($genre) use ($selectedGenre) {
+        });
     }
 
     /**

@@ -26,7 +26,7 @@ class CreatePlaylistRequest extends FormRequest
         return [
             'target_playlist_ids' => ['required', 'array'],
             'playlist_name' => ['required', 'string'],
-            'genres' => ['required', 'array'],
+            'genres' => ['required', 'string'],
         ];
     }
 }
