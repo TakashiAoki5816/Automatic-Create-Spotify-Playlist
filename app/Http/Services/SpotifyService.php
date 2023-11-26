@@ -2,14 +2,19 @@
 
 namespace App\Http\Services;
 
+use App\Http\Repositories\GenreCategoryRepository;
+use App\Http\Repositories\GenreRepository;
 use App\Http\Services\GuzzleService;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class SpotifyService
 {
     protected $guzzleService;
+    protected $genreRepository;
+    protected $genreCategoryRepository;
     private static $maxItemsPerRequest = 100; // 一度のリクエストで取得できる最大アイテム数
 
     /**
@@ -17,9 +22,14 @@ class SpotifyService
      *
      * @param GuzzleService $guzzleService
      */
-    public function __construct(GuzzleService $guzzleService)
-    {
+    public function __construct(
+        GuzzleService $guzzleService,
+        GenreRepository $genreRepository,
+        GenreCategoryRepository $genreCategoryRepository,
+    ) {
         $this->guzzleService = $guzzleService;
+        $this->genreRepository = $genreRepository;
+        $this->genreCategoryRepository = $genreCategoryRepository;
     }
 
     /**
@@ -127,26 +137,31 @@ class SpotifyService
     }
 
     /**
-     * 指定されたジャンルで絞り込む
+     * 選択されたジャンルでフィルタリングしたコレクションを返却
      *
      * @param string $accessToken
      * @param string $selectedGenre 選択されたジャンル
      * @param Collection $allTrackIdAndArtistIdCollection
-     * @return void
+     * @return Collection $filteredTrackIdAndArtistIdCollection フィルタリングされたトラックID・アーティストIDコレクション
      */
-    public function filteredTargetGenre(string $accessToken, string $selectedGenre, Collection $allTrackIdAndArtistIdCollection)
+    public function filteredSelectedGenre(string $accessToken, string $selectedGenre, Collection $allTrackIdAndArtistIdCollection): Collection
     {
-        $allTrackIdAndArtistIdCollection->filter(function (array $trackIdAndAccessTokenArray) use ($accessToken, $selectedGenre) {
+        $filteredTrackIdAndArtistIdCollection = $allTrackIdAndArtistIdCollection->filter(function (array $trackIdAndAccessTokenArray) use ($accessToken, $selectedGenre) {
             // アーティストに設定されているジャンルを取得
             $artistGenres = $this->fetchGenresByArtistId($accessToken, $trackIdAndAccessTokenArray['artist_id']);
 
             // genresがない場合の制御
             // genresはあるけど、想定外のジャンル
             // 選択されたジャンルなのかをフィルタリング
-            $bool = $this->checkContainSelectedGenre($selectedGenre, $artistGenres, $trackIdAndAccessTokenArray['track_id']);
+            $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackIdAndAccessTokenArray['track_id']);
+            if ($containFlg) {
+                return true;
+            }
 
-            return $bool;
+            return false;
         });
+
+        return $filteredTrackIdAndArtistIdCollection;
     }
 
     /**
@@ -167,16 +182,47 @@ class SpotifyService
     /**
      * 選択されたジャンルが含まれているか確認
      *
-     * @param string $selectedGenre 選択されたジャンル
      * @param string $artistGenres アーティストに設定されているジャンル
-     * @param string $trackId
-     * @return bool
+     * @param string $selectedGenre 選択されたジャンル
+     * @return bool $containFlg 選択されたジャンルが含まれているかのフラグ trueの場合、含まれている
      */
-    public function checkContainSelectedGenre(string $selectedGenre, array $artistGenres, string $trackId): bool
+    public function checkContainSelectedGenre(array $artistGenres, string $selectedGenre): bool
     {
+        $containFlg = false;
+
         // アーティストに設定されているジャンルが選択されたジャンルに含まれているか
-        collect($artistGenres)->map(function ($genre) use ($selectedGenre) {
+        collect($artistGenres)->each(function (string $artistGenre) use ($selectedGenre, &$containFlg) {
+            // アーティストジャンルから、どのジャンルカテゴリーなのかを取得
+            $genreCategoryName = $this->fetchGenreCategoryNameByArtistGenre($artistGenre);
+
+            // 取得したジャンルが選択されたジャンルなのかを比較、一致した場合eachを抜けcontainFlgをtrueに変換
+            if ($genreCategoryName === $selectedGenre) {
+                $containFlg = true;
+                // eachメソッドを抜ける
+                return false;
+            }
         });
+
+        return $containFlg;
+    }
+
+    /**
+     * アーティストジャンルからジャンルカテゴリー名を取得
+     *
+     * @param string $artistGenre アーティストジャンル
+     * @return string ジャンルカテゴリー名
+     */
+    public function fetchGenreCategoryNameByArtistGenre(string $artistGenre): ?string
+    {
+        $genre = $this->genreRepository->findGenreByName($artistGenre);
+        if (is_null($genre)) {
+            Log::debug('登録されていないジャンルです: ' . $genre);
+            return null;
+        }
+
+        $genreCategory = $this->genreCategoryRepository->findGenreCategoryByGenreCategoryId($genre->genre_category_id);
+
+        return $genreCategory->name;
     }
 
     /**

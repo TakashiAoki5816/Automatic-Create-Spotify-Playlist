@@ -114,14 +114,15 @@ class SpotifyController extends Controller
 
             // TODO getAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
             // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
-            $filteredAllTrackIdAndArtistIdCollection = $this->spotifyService->filteredTargetGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
+            //
+            $filteredTrackIdAndArtistIdCollection = $this->spotifyService->filteredSelectedGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
 
             // 新規 空プレイリスト作成
-            // $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
-            // $content = json_decode($response->getBody());
+            $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
+            $content = json_decode($response->getBody());
 
-            // // 作成したプレイリストにトラック追加
-            // $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $allTrackIdAndArtistIdCollection);
+            // 作成したプレイリストにトラック追加
+            $this->spotifyService->addTracksToNewPlaylist($accessToken, $content->id, $filteredTrackIdAndArtistIdCollection);
         } catch (Exception $e) {
             Log::error('createPlayList@SpotifyController: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
