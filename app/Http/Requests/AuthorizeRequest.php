@@ -12,7 +12,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class AuthorizeRequest extends FormRequest
 {
-    const SCOPE = 'playlist-modify-public';
+    private static $scope = 'playlist-modify-public';
 
     /**
      * Determine if the user is authorized to make this request.
@@ -36,14 +36,19 @@ class AuthorizeRequest extends FormRequest
         ];
     }
 
-    public function toEntity()
+    /**
+     * エンティティ化
+     *
+     * @return AuthorizeEntity
+     */
+    public function toEntity(): AuthorizeEntity
     {
         return new AuthorizeEntity(
             new AccountUrl(AccountUrl::BASE_URL),
             new ClientId(config('spotify.auth.client_id')),
             new ResponseType(),
             new RedirectUrl(config('spotify.auth.redirect_url')),
-            new Scope(self::SCOPE),
+            new Scope(self::$scope),
         );
     }
 }

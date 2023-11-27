@@ -93,13 +93,13 @@ class SpotifyService
      * 指定プレイリスト内にある全てのトラックID取得
      *
      * @param string $accessToken
-     * @param array $targetPlaylistIds
-     * @return Collection<string $trackId, string $artistId> $trackIds 指定プレイリスト内にある全てのトラックID/アーティストID
+     * @param array $targetPlaylistIds 対象プレイリストIDs
+     * @return Collection<string $trackId, string $artistId> 対象プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクション
      */
-    public function getAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds): Collection
+    public function retrieveAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds): Collection
     {
         // プレイリストごとにトラックID, アーティストIDを格納したコレクション
-        $allTrackIdAndArtistIdsCollection = $this->getAllTrackIdAndArtistIds($accessToken, $targetPlaylistIds);
+        $allTrackIdAndArtistIdsCollection = $this->retrieveAllTrackIdAndArtistIds($accessToken, $targetPlaylistIds);
 
         // 複数の連想配列から単一の連想配列に集約
         return $allTrackIdAndArtistIdsCollection->reduce(function ($carry, $item) {
@@ -107,7 +107,7 @@ class SpotifyService
         }, collect());
     }
 
-    public function getAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): Collection
+    public function retrieveAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): Collection
     {
         return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
             // １回目のリクエスト （一度のリクエストで取得できるトラックは100曲まで）
