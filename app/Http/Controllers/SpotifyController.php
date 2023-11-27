@@ -43,6 +43,7 @@ class SpotifyController extends Controller
      *
      * @param AuthorizeRequest $request
      * @throws AuthorizeException $e
+     * @throws Exception $e
      * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
      */
     public function authorization(AuthorizeRequest $request): Redirector|RedirectResponse
@@ -54,16 +55,21 @@ class SpotifyController extends Controller
             Log::error('authorization@SpotifyController: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
             throw $e;
+        } catch (Exception $e) {
+            Log::error('authorization@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            throw $e;
         }
 
         return redirect($authorizeUrl);
     }
 
     /**
-     * Access Tokenを取得し、セッションに格納
+     * アクセストークンを取得し、セッションに格納
      *
      * @param AccessTokenRequest $request
      * @throws CanNotGetAccessTokenException $e
+     * @throws Exception $e
      * @return RedirectResponse
      */
     public function accessToken(AccessTokenRequest $request): RedirectResponse
@@ -78,6 +84,10 @@ class SpotifyController extends Controller
             Log::error('accessToken@SpotifyController: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
             throw $e;
+        } catch (Exception $e) {
+            Log::error('accessToken@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            throw $e;
         }
 
         return redirect()->route('main.index');
@@ -87,12 +97,19 @@ class SpotifyController extends Controller
      * ユーザー自身のプレイリストを取得する
      *
      * @param Request $request
+     * @throws Exception $e
      * @return JsonResponse
      */
     public function retrieveMyPlaylist(Request $request): JsonResponse
     {
-        $accessToken = $request->session()->get('access_token');
-        $playlists = $this->spotifyService->retrieveMyPlayList($accessToken);
+        try {
+            $accessToken = $request->session()->get('access_token');
+            $playlists = $this->spotifyService->retrieveMyPlayList($accessToken);
+        } catch (Exception $e) {
+            Log::error('retrieveMyPlaylist@SpotifyController: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            throw $e;
+        }
 
         return response()->json($playlists);
     }
@@ -101,6 +118,7 @@ class SpotifyController extends Controller
      * 対象のプレイリストから指定したジャンルだけを抽出したプレイリストを作成
      *
      * @param CreatePlaylistRequest $request
+     * @throws Exception $e
      * @return
      */
     public function createPlayList(CreatePlaylistRequest $request)
@@ -114,7 +132,6 @@ class SpotifyController extends Controller
 
             // TODO getAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
             // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
-            //
             $filteredTrackIdAndArtistIdCollection = $this->spotifyService->filteredSelectedGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
 
             // 新規 空プレイリスト作成

@@ -66,12 +66,24 @@ class SpotifyService
         return $content->id;
     }
 
-    public function toDecodeJson($response)
+    /**
+     * JSON文字列のレスポンスボディを取得し、デコード化
+     *
+     * @param GuzzleResponse $response
+     * @return stdClass
+     */
+    public function toDecodeJson(GuzzleResponse $response): stdClass
     {
         return json_decode($response->getBody()->getContents());
     }
 
-    public function retrieveMyPlayList(string $accessToken)
+    /**
+     * ユーザー自身のプレイリストを取得する
+     *
+     * @param string $accessToken
+     * @return stdClass
+     */
+    public function retrieveMyPlayList(string $accessToken): stdClass
     {
         $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me/playlists");
         return $this->toDecodeJson($response);
@@ -216,7 +228,7 @@ class SpotifyService
     {
         $genre = $this->genreRepository->findGenreByName($artistGenre);
         if (is_null($genre)) {
-            Log::debug('登録されていないジャンルです: ' . $genre);
+            Log::debug("登録されていないジャンルです:{$artistGenre}");
             return null;
         }
 
