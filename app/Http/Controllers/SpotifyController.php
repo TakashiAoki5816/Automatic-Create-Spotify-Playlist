@@ -127,14 +127,13 @@ class SpotifyController extends Controller
         $accessToken = $request->session()->get('access_token');
 
         try {
-            // 対象プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクションを取得
+            // 対象プレイリスト内にある全てのトラックからトラックID/アーティストIDを単一の連想配列に格納したコレクションを取得
             $allTrackIdAndArtistIdCollection = $this->spotifyService->retrieveAllTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids']);
 
-            // TODO retrieveAllTrackIdAndArtistIdByTargetPlaylist で取得したレスポンスの中でフィルタリングできそう
-            // 責務としては今の処理がわかりやすいけど、無駄なリクエストが発生している
+            // 対象プレイリスト内にある全てのトラックから選択したジャンルのトラックだけを抽出
             $filteredTrackIdAndArtistIdCollection = $this->spotifyService->filteredSelectedGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
 
-            // 新規 空プレイリスト作成
+            // 新規プレイリスト作成
             $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);
             $content = json_decode($response->getBody());
 
@@ -147,7 +146,7 @@ class SpotifyController extends Controller
         }
 
         return response()->json([
-            'status' => 200,
-        ]);
+            'message' => "{$validated['playlist_name']}という名前でプレイリストを作成しました。",
+        ], 200);
     }
 }

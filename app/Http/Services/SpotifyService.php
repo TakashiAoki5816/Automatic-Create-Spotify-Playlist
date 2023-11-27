@@ -33,26 +33,6 @@ class SpotifyService
     }
 
     /**
-     * 新規 空プレイリスト作成
-     *
-     * @param string $accessToken
-     * @param string $playlistName フォームから送られてきたプレイリスト名
-     * @return GuzzleResponse
-     */
-    public function createNewPlayList(string $accessToken, string $playlistName): GuzzleResponse
-    {
-        // ユーザーID取得
-        $userId = $this->retrieveUserId($accessToken);
-
-        $formData = [
-            "name" => $playlistName,
-            "public" => true, // TODO ゆくゆくはpublic, private選べるようにする
-        ];
-
-        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
-    }
-
-    /**
      * ユーザーID 取得
      *
      * @param string $accessToken
@@ -235,6 +215,26 @@ class SpotifyService
         $genreCategory = $this->genreCategoryRepository->findGenreCategoryByGenreCategoryId($genre->genre_category_id);
 
         return $genreCategory->name;
+    }
+
+    /**
+     * 新規 空プレイリスト作成
+     *
+     * @param string $accessToken
+     * @param string $playlistName フォームから送られてきたプレイリスト名
+     * @return GuzzleResponse
+     */
+    public function createNewPlayList(string $accessToken, string $playlistName): GuzzleResponse
+    {
+        // ユーザーID取得
+        $userId = $this->retrieveUserId($accessToken);
+
+        $formData = [
+            "name" => $playlistName,
+            "public" => true, // TODO ゆくゆくはpublic, private選べるようにする
+        ];
+
+        return $this->guzzleService->requestToSpotify($accessToken, "POST", "/users/{$userId}/playlists", $formData);
     }
 
     /**
