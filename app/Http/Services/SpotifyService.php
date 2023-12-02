@@ -12,9 +12,9 @@ use stdClass;
 
 class SpotifyService
 {
-    protected $guzzleService;
-    protected $genreRepository;
-    protected $genreCategoryRepository;
+    protected GuzzleService $guzzleService;
+    protected GenreRepository $genreRepository;
+    protected GenreCategoryRepository $genreCategoryRepository;
     private static $maxItemsPerRequest = 100; // 一度のリクエストで取得できる最大アイテム数
 
     /**
@@ -30,20 +30,6 @@ class SpotifyService
         $this->guzzleService = $guzzleService;
         $this->genreRepository = $genreRepository;
         $this->genreCategoryRepository = $genreCategoryRepository;
-    }
-
-    /**
-     * ユーザーID 取得
-     *
-     * @param string $accessToken
-     * @return string ユーザーID
-     */
-    public function retrieveUserId(string $accessToken): string
-    {
-        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
-        $content = $this->toDecodeJson($response);
-
-        return $content->id;
     }
 
     /**
@@ -87,6 +73,13 @@ class SpotifyService
         }, collect());
     }
 
+    /**
+     * プレイリストごとにトラックID, アーティストIDを格納したコレクションを返却
+     *
+     * @param string $accessToken
+     * @param array $targetPlaylistIds 対象プレイリストIDs
+     * @return Collection
+     */
     public function retrieveAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): Collection
     {
         return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
@@ -133,19 +126,17 @@ class SpotifyService
      *
      * @param string $accessToken
      * @param string $selectedGenre 選択されたジャンル
-     * @param Collection $allTrackIdAndArtistIdCollection
+     * @param Collection $trackIdAndArtistIdCollection トラックID/アーティストIDを格納したコレクション
      * @return Collection $filteredTrackIdAndArtistIdCollection フィルタリングされたトラックID・アーティストIDコレクション
      */
-    public function filteredSelectedGenre(string $accessToken, string $selectedGenre, Collection $allTrackIdAndArtistIdCollection): Collection
+    public function filteredSelectedGenre(string $accessToken, string $selectedGenre, Collection $trackIdAndArtistIdCollection): Collection
     {
-        $filteredTrackIdAndArtistIdCollection = $allTrackIdAndArtistIdCollection->filter(function (array $trackIdAndAccessTokenArray) use ($accessToken, $selectedGenre) {
+        $filteredTrackIdAndArtistIdCollection = $trackIdAndArtistIdCollection->filter(function (array $trackIdAndArtistId) use ($accessToken, $selectedGenre) {
             // アーティストに設定されているジャンルを取得
-            $artistGenres = $this->fetchGenresByArtistId($accessToken, $trackIdAndAccessTokenArray['artist_id']);
+            $artistGenres = $this->fetchGenresByArtistId($accessToken, $trackIdAndArtistId['artist_id']);
 
-            // genresがない場合の制御
-            // genresはあるけど、想定外のジャンル
             // 選択されたジャンルなのかをフィルタリング
-            $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackIdAndAccessTokenArray['track_id']);
+            $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackIdAndArtistId['track_id']);
             if ($containFlg) {
                 return true;
             }
@@ -207,12 +198,13 @@ class SpotifyService
     public function fetchGenreCategoryNameByArtistGenre(string $artistGenre): ?string
     {
         $genre = $this->genreRepository->findGenreByName($artistGenre);
+        // 登録済みのジャンルか確認
         if (is_null($genre)) {
             Log::debug("登録されていないジャンルです:{$artistGenre}");
             return null;
         }
 
-        $genreCategory = $this->genreCategoryRepository->findGenreCategoryByGenreCategoryId($genre->genre_category_id);
+        $genreCategory = $this->genreCategoryRepository->findByGenreCategoryId($genre->genre_category_id);
 
         return $genreCategory->name;
     }
@@ -221,7 +213,7 @@ class SpotifyService
      * 新規 空プレイリスト作成
      *
      * @param string $accessToken
-     * @param string $playlistName フォームから送られてきたプレイリスト名
+     * @param string $playlistName プレイリスト名
      * @return GuzzleResponse
      */
     public function createNewPlayList(string $accessToken, string $playlistName): GuzzleResponse
@@ -238,17 +230,31 @@ class SpotifyService
     }
 
     /**
+     * ユーザーID 取得
+     *
+     * @param string $accessToken
+     * @return string ユーザーID
+     */
+    public function retrieveUserId(string $accessToken): string
+    {
+        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/me");
+        $content = $this->toDecodeJson($response);
+
+        return $content->id;
+    }
+
+    /**
      * 作成したプレイリストにトラックを追加
      *
      * @param string $accessToken
      * @param string $playlistId 作成したプレイリストID
-     * @param Collection $allTrackIdAndArtistIdCollection 追加するトラックIDs
+     * @param Collection $trackIdAndArtistIdCollection 追加するトラック
      * @return GuzzleResponse
      */
-    public function addTracksToNewPlaylist(string $accessToken, string $playlistId, Collection $allTrackIdAndArtistIdCollection)
+    public function addTracksToNewPlaylist(string $accessToken, string $playlistId, Collection $trackIdAndArtistIdCollection)
     {
         // トラックURI形式にトラックIDを整形し、100曲単位に分割する(一度のリクエストで追加できるのは最大100曲までのため)
-        $trackUrisChunksCollection = $allTrackIdAndArtistIdCollection->map(function (array $trackIdAndArtistIdArray) {
+        $trackUrisChunksCollection = $trackIdAndArtistIdCollection->map(function (array $trackIdAndArtistIdArray) {
             return 'spotify:track:' . $trackIdAndArtistIdArray['track_id'];
         })->chunk(100);
 

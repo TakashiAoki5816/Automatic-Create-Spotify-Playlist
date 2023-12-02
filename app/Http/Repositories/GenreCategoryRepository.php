@@ -19,12 +19,12 @@ class GenreCategoryRepository
     }
 
     /**
-     * ジャンルカテゴリーIDからモデルを取得
+     * ジャンルカテゴリーIDからGenreCategoryモデルを取得
      *
      * @param int $genreCategoryId ジャンルカテゴリーID
      * @return GenreCategory ジャンルカテゴリー
      */
-    public function findGenreCategoryByGenreCategoryId(int $genreCategoryId): GenreCategory
+    public function findByGenreCategoryId(int $genreCategoryId): GenreCategory
     {
         return GenreCategory::find($genreCategoryId);
     }
