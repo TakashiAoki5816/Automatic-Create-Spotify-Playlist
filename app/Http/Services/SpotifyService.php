@@ -62,10 +62,10 @@ class SpotifyService
      * @param array $targetPlaylistIds 対象プレイリストIDs
      * @return Collection<string $trackId, string $artistId> 対象プレイリスト内にある全てのトラックID/アーティストIDを単一の連想配列に格納したコレクション
      */
-    public function retrieveAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds): Collection
+    public function retrieveAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds, string $selectedGenre): Collection
     {
         // プレイリストごとにトラックID, アーティストIDを格納したコレクション
-        $allTrackIdAndArtistIdsCollection = $this->retrieveAllTrackIdAndArtistIds($accessToken, $targetPlaylistIds);
+        $allTrackIdAndArtistIdsCollection = $this->retrieveAllTrackIdAndArtistIds($accessToken, $targetPlaylistIds, $selectedGenre);
 
         // 複数の連想配列から単一の連想配列に集約
         return $allTrackIdAndArtistIdsCollection->reduce(function ($carry, $item) {
@@ -80,21 +80,37 @@ class SpotifyService
      * @param array $targetPlaylistIds 対象プレイリストIDs
      * @return Collection
      */
-    public function retrieveAllTrackIdAndArtistIds(string $accessToken, array $targetPlaylistIds): Collection
+    public function retrieveFilteredTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds, string $selectedGenre): Collection
     {
-        return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken) {
+        return collect($targetPlaylistIds)->map(function (string $playlistId) use ($accessToken, $selectedGenre) {
             // １回目のリクエスト （一度のリクエストで取得できるトラックは100曲まで）
             $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/playlists/{$playlistId}");
             $playlistData = $this->toDecodeJson($response);
 
+            // 選択されたジャンルでフィルタリングしたコレクションを返却
+            $filteredTrackIdAndArtistIdCollection = collect($playlistData->tracks->items)->filter(function (stdClass $item) use ($accessToken, $selectedGenre) {
+                $artistId = $item->track->artists[0]->id;
+                $trackId = $item->track->id;
+
+                // アーティストに設定されているジャンルを取得
+                $artistGenres = $this->fetchGenresByArtistId($accessToken, $artistId);
+
+                // 選択されたジャンルなのかをフィルタリング
+                $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackId);
+                if ($containFlg) {
+                    return true;
+                }
+
+                return false;
+            });
+
             // 1回目のリクエストで取得した最大100曲分のトラックID/アーティストIDを格納
-            $firstPlaylistTrackIdAndArtistIdsCollection = collect($playlistData->tracks->items)->map(function (stdClass $item) {
+            $firstPlaylistTrackIdAndArtistIdsCollection = $filteredTrackIdAndArtistIdCollection->map(function (stdClass $item) {
                 return [
                     'track_id' => $item->track->id,
                     'artist_id' => $item->track->artists[0]->id,
                 ];
             });
-
             $playlistTrackIdAndArtistIdsCollection = $firstPlaylistTrackIdAndArtistIdsCollection;
 
             // 必要なリクエスト回数 = 全アイテム数 ÷ 100(一度のリクエストで取得できる最大アイテム数) 切り上げ
@@ -106,7 +122,25 @@ class SpotifyService
 
                 $response = $this->guzzleService->requestByUrl($accessToken, 'GET', $url);
                 $playlistData = $this->toDecodeJson($response);
-                $trackIdAndPlaylistIdsCollection = collect($playlistData->items)->map(function (stdClass $item) {
+
+                // 選択されたジャンルでフィルタリングしたコレクションを返却
+                $filteredTrackIdAndArtistIdCollection = collect($playlistData->items)->filter(function (stdClass $item) use ($accessToken, $selectedGenre) {
+                    $artistId = $item->track->artists[0]->id;
+                    $trackId = $item->track->id;
+
+                    // アーティストに設定されているジャンルを取得
+                    $artistGenres = $this->fetchGenresByArtistId($accessToken, $artistId);
+
+                    // 選択されたジャンルなのかをフィルタリング
+                    $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackId);
+                    if ($containFlg) {
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                $trackIdAndPlaylistIdsCollection = $filteredTrackIdAndArtistIdCollection->map(function (stdClass $item) {
                     return [
                         'track_id' => $item->track->id,
                         'artist_id' => $item->track->artists[0]->id,
