@@ -128,10 +128,7 @@ class SpotifyController extends Controller
 
         try {
             // 対象プレイリスト内にある全てのトラックからトラックID/アーティストIDを単一の連想配列に格納したコレクションを取得
-            $filteredTrackIdAndArtistIdCollection = $this->spotifyService->retrieveFilteredTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids'], $validated['genres']);
-
-            // 対象プレイリスト内にある全てのトラックから選択したジャンルのトラックだけを抽出
-            // $filteredTrackIdAndArtistIdCollection = $this->spotifyService->filteredSelectedGenre($accessToken, $validated['genres'], $allTrackIdAndArtistIdCollection);
+            $filteredTrackIdAndArtistIdCollection = $this->spotifyService->retrieveAllTrackIdAndArtistIdByTargetPlaylist($accessToken, $validated['target_playlist_ids'], $validated['genres']);
 
             // 新規プレイリスト作成
             $response = $this->spotifyService->createNewPlayList($accessToken, $validated['playlist_name']);

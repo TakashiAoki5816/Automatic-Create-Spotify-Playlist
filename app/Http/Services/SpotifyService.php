@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\Http\Repositories\ArtistRepository;
 use App\Http\Repositories\GenreCategoryRepository;
 use App\Http\Repositories\GenreRepository;
 use App\Http\Services\GuzzleService;
@@ -15,6 +16,7 @@ class SpotifyService
     protected GuzzleService $guzzleService;
     protected GenreRepository $genreRepository;
     protected GenreCategoryRepository $genreCategoryRepository;
+    protected ArtistRepository $artistRepository;
     private static $maxItemsPerRequest = 100; // 一度のリクエストで取得できる最大アイテム数
 
     /**
@@ -26,10 +28,12 @@ class SpotifyService
         GuzzleService $guzzleService,
         GenreRepository $genreRepository,
         GenreCategoryRepository $genreCategoryRepository,
+        ArtistRepository $artistRepository,
     ) {
         $this->guzzleService = $guzzleService;
         $this->genreRepository = $genreRepository;
         $this->genreCategoryRepository = $genreCategoryRepository;
+        $this->artistRepository = $artistRepository;
     }
 
     /**
@@ -65,7 +69,7 @@ class SpotifyService
     public function retrieveAllTrackIdAndArtistIdByTargetPlaylist(string $accessToken, array $targetPlaylistIds, string $selectedGenre): Collection
     {
         // プレイリストごとにトラックID, アーティストIDを格納したコレクション
-        $allTrackIdAndArtistIdsCollection = $this->retrieveAllTrackIdAndArtistIds($accessToken, $targetPlaylistIds, $selectedGenre);
+        $allTrackIdAndArtistIdsCollection = $this->retrieveFilteredTrackIdAndArtistIdByTargetPlaylist($accessToken, $targetPlaylistIds, $selectedGenre);
 
         // 複数の連想配列から単一の連想配列に集約
         return $allTrackIdAndArtistIdsCollection->reduce(function ($carry, $item) {
@@ -156,32 +160,6 @@ class SpotifyService
     }
 
     /**
-     * 選択されたジャンルでフィルタリングしたコレクションを返却
-     *
-     * @param string $accessToken
-     * @param string $selectedGenre 選択されたジャンル
-     * @param Collection $trackIdAndArtistIdCollection トラックID/アーティストIDを格納したコレクション
-     * @return Collection $filteredTrackIdAndArtistIdCollection フィルタリングされたトラックID・アーティストIDコレクション
-     */
-    public function filteredSelectedGenre(string $accessToken, string $selectedGenre, Collection $trackIdAndArtistIdCollection): Collection
-    {
-        $filteredTrackIdAndArtistIdCollection = $trackIdAndArtistIdCollection->filter(function (array $trackIdAndArtistId) use ($accessToken, $selectedGenre) {
-            // アーティストに設定されているジャンルを取得
-            $artistGenres = $this->fetchGenresByArtistId($accessToken, $trackIdAndArtistId['artist_id']);
-
-            // 選択されたジャンルなのかをフィルタリング
-            $containFlg = $this->checkContainSelectedGenre($artistGenres, $selectedGenre, $trackIdAndArtistId['track_id']);
-            if ($containFlg) {
-                return true;
-            }
-
-            return false;
-        });
-
-        return $filteredTrackIdAndArtistIdCollection;
-    }
-
-    /**
      * アーティストIDからジャンルを取得
      *
      * @param string $accessToken
@@ -190,10 +168,21 @@ class SpotifyService
      */
     public function fetchGenresByArtistId(string $accessToken, string $artistId): array
     {
-        $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/{$artistId}");
-        $content = $this->toDecodeJson($response);
+        $artist = $this->artistRepository->findByArtistId($artistId);
 
-        return $content->genres;
+        // DB存在確認
+        if (is_null($artist)) {
+            // アーティストAPIを叩いてデータ取得
+            $response = $this->guzzleService->requestToSpotify($accessToken, "GET", "/artists/{$artistId}");
+            $content = $this->toDecodeJson($response);
+
+            // DB保存
+            $this->artistRepository->save($content);
+
+            return $content->genres;
+        }
+
+        return json_decode($artist->genres);
     }
 
     /**
