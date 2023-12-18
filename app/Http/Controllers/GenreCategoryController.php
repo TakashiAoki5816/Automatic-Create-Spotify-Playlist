@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Services\GenreCategoryService;
 use Illuminate\Http\Request;
 
 class GenreCategoryController extends Controller
