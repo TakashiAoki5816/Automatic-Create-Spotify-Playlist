@@ -20,9 +20,15 @@ Spotify 認証を行い、Spotify API のアクセストークンを取得
 ## Usage
 
 1. `$ git clone https://github.com/TakashiAoki5816/Automatic-Create-Spotify-Playlist.git`
-2. `$ cp .env.example .env`
-3. Access to [Spotify for Developers](https://developer.spotify.com/dashboard) after that Create app
-4. Set env from Settings
+2. `$ cp .env.example .env | cp ./docker/.env.example ./docker/.env`
+3. `$ composer require laravel/sail --dev`
+4. `$ php artisan sail:install`
+5. `$ composer install`
+6. `$ ./vendor/bin/sail npm install`
+7. Access to [Spotify for Developers](https://developer.spotify.com/dashboard) after that Create app
+8. Set env from Settings
+9. ./vendor/bin/sail php -v
+10. ./vendor/bin/sail npm run dev
 
 ```
 SPOTIFY_CLIENT_ID=
