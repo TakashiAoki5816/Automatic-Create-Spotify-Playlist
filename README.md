@@ -33,8 +33,8 @@ SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 ```
 
-9. `$ php artisan optimize:clear`
-10. `$ ./vendor/bin/sail php artisan db:seed`
-11. `$ ./vendor/bin/sail php artisan migrate`
+9. `$ ./vendor/bin/sail php artisan optimize:clear`
+10. `$ ./vendor/bin/sail php artisan migrate`
+11. `$ ./vendor/bin/sail php artisan db:seed`
 12. `$ ./vendor/bin/sail up -d`
 13. `$ ./vendor/bin/sail npm run dev`
