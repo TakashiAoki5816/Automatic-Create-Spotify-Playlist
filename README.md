@@ -12,14 +12,14 @@
 
 ## About
 
-Spotify認証を行い、Spotify API のアクセストークンを取得  
-認証を行うとリダイレクトされ、ホームページが表示される  
-対象とするプレイリスト, 作成するプレイリストの名前, 抽出するジャンルを選択し作成ボタンを押下  
-※ 100曲程度ならこの手順で済むが 1000 曲単位になってくると現状エラーになってしまう → デバッガーでブレイクポイントを指定しながらだとできるが要修正  
+Spotify 認証を行い、Spotify API のアクセストークンを取得
+認証を行うとリダイレクトされ、ホームページが表示される
+対象とするプレイリスト, 作成するプレイリストの名前, 抽出するジャンルを選択し作成ボタンを押下
+※ 100 曲程度ならこの手順で済むが 1000 曲単位になってくると現状エラーになってしまう → デバッガーでブレイクポイントを指定しながらだとできるが要修正
 
 ## Usage
 
-1. `$ git clone https://github.com/TakashiAoki5816/Automatic-Create-Spotify-Playlist.git`
+1. `$ git clone`
 2. `$ cp .env.example .env | cp ./docker/.env.example ./docker/.env`
 3. `$ composer require laravel/sail --dev`
 4. `$ php artisan sail:install`
@@ -27,10 +27,14 @@ Spotify認証を行い、Spotify API のアクセストークンを取得
 6. `$ ./vendor/bin/sail npm install`
 7. Access to [Spotify for Developers](https://developer.spotify.com/dashboard) after that Create app
 8. Set env from Settings
-9. ./vendor/bin/sail php -v
-10. ./vendor/bin/sail npm run dev
 
 ```
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 ```
+
+9. `$ php artisan optimize:clear`
+10. `$ ./vendor/bin/sail php artisan db:seed`
+11. `$ ./vendor/bin/sail php artisan migrate`
+12. `$ ./vendor/bin/sail up -d`
+13. `$ ./vendor/bin/sail npm run dev`
