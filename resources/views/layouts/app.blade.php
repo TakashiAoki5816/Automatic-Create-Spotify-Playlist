@@ -5,10 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Laravel</title>
+    <title>Automatic Create Spotify Playlist</title>
 
     <!-- Fonts -->
     <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    {{-- Favicon --}}
+    <link rel="icon" href="https://developer.spotify.com/images/guidelines/design/icon3@2x.png">
 
     <!-- Styles -->
     <style>
