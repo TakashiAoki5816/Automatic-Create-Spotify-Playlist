@@ -36,5 +36,6 @@ SPOTIFY_CLIENT_SECRET=
 9. `$ ./vendor/bin/sail php artisan optimize:clear`
 10. `$ ./vendor/bin/sail php artisan migrate`
 11. `$ ./vendor/bin/sail php artisan db:seed`
-12. `$ ./vendor/bin/sail up -d`
-13. `$ ./vendor/bin/sail npm run dev`
+12. `$ ./vendor/bin/sail php artisan key:generate`
+13. `$ ./vendor/bin/sail up -d`
+14. `$ ./vendor/bin/sail npm run dev`
