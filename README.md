@@ -8,7 +8,9 @@
 
 # Automatic Create Spotify Playlist
 
-単一または複数のプレイリストから選択したジャンルだけを抽出したプレイリストを作成する
+単一または複数のプレイリストから選択したジャンルの楽曲だけを抽出したプレイリストを作成する
+![スクリーンショット 2023-12-24 22 51 50](https://github.com/TakashiAoki5816/Automatic-Create-Spotify-Playlist/assets/56289802/0a599616-1d69-4402-8234-8a8396a80854)
+
 
 ## About
 
